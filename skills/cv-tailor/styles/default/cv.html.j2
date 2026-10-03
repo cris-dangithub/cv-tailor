@@ -1,0 +1,115 @@
+{#- CV template. Design lives in cv.css; this file is structure only.
+    Optional fields are read with .get() on purpose: the environment uses
+    StrictUndefined so a misspelt key fails instead of rendering empty, and
+    .get() marks explicitly what may be missing. -#}
+{%- macro link(x) -%}
+  {%- if x is mapping -%}
+    <a href="{{ x.url }}"{% if x.get('cert') %} class="cert"{% endif %}>{{ x.text }}</a>
+  {%- else -%}{{ x }}{%- endif -%}
+{%- endmacro -%}
+
+{%- macro chunks(v) -%}
+  {%- if v is string -%}{{ v }}
+  {%- elif v -%}{% for p in v %}{{ link(p) }}{% endfor %}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro bullets(items) -%}
+<ul class="bullets">
+  {%- for it in items %}
+  <li>
+    {%- if it is mapping -%}
+      {{ chunks(it.text) }}{% if it.get('sub') %}{{ bullets(it.sub) }}{% endif %}
+    {%- else -%}{{ chunks(it) }}{%- endif -%}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endmacro -%}
+<!DOCTYPE html>
+<html lang="{{ meta.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="cv-tailor-style" content="{{ style_name }}">
+<meta name="cv-tailor-target-pages" content="{{ target_pages }}">
+<title>{{ meta.name }} — {{ meta.get('role_plain') or meta.role }}</title>
+<style>{{ tokens_css }}</style>
+<link rel="stylesheet" href="{{ css_path }}">
+</head>
+<body>
+
+<p class="name">{{ meta.name }}</p>
+<p class="role">{{ chunks(meta.role) }}</p>
+
+<table class="contact">
+  {%- for row in header %}
+  <tr>
+    <td class="col-left">{{ chunks(row.get('left')) }}</td>
+    <td class="col-center">{{ chunks(row.get('center')) }}</td>
+    <td class="col-right">{{ chunks(row.get('right')) }}</td>
+  </tr>
+  {%- endfor %}
+</table>
+
+{% for s in sections %}
+<div class="section">
+  <h2>{{ s.title }}</h2>
+
+  {%- if s.type == 'prose' %}
+  <p class="prose">{{ chunks(s.body) }}</p>
+
+  {%- elif s.type == 'entries' %}
+    {%- for e in s.entries %}
+      {%- set has_second = e.get('role') or e.get('dates') %}
+  <div class="entry">
+    <div class="row{% if not has_second %} dotted-rule{% endif %}">
+      <span class="l entity">{{ chunks(e.entity) }}</span>
+      {%- if e.get('entity_note') %}
+      <span class="r entity-note">{{ chunks(e.entity_note) }}</span>
+      {%- endif %}
+    </div>
+    {%- if has_second %}
+    <div class="row dotted-rule">
+      <span class="l position">{{ chunks(e.get('role')) }}</span>
+      <span class="r dates">{{ chunks(e.get('dates')) }}</span>
+    </div>
+    {%- endif %}
+    {%- for ln in e.get('lines') or [] %}
+    <div class="row line">
+      <span class="l">{{ chunks(ln.get('left')) }}</span>
+      {%- if ln.get('right') %}<span class="r">{{ chunks(ln.right) }}</span>{% endif %}
+    </div>
+    {%- endfor %}
+    {%- if e.get('meta') %}<p class="factsheet">{{ chunks(e.meta) }}</p>{% endif %}
+    {%- if e.get('summary') %}<p class="prose">{{ chunks(e.summary) }}</p>{% endif %}
+    {%- for g in e.get('groups') or [] %}
+    <p class="group">{{ g.title }}</p>
+    {{ bullets(g.bullets) }}
+    {%- endfor %}
+    {%- if e.get('bullets') %}{{ bullets(e.bullets) }}{% endif %}
+  </div>
+    {%- endfor %}
+
+  {%- elif s.type == 'columns' %}
+  <div class="columns">
+    <div class="c-left">
+      {%- for b in s.left %}
+      <h3 class="dotted-rule">{{ b.title }}</h3>
+      {{ bullets(b.bullets) }}
+      {%- endfor %}
+    </div>
+    <div class="c-right">
+      {%- for b in s.right %}
+      <h3 class="dotted-rule">{{ b.title }}</h3>
+      {{ bullets(b.bullets) }}
+      {%- endfor %}
+    </div>
+  </div>
+
+  {%- elif s.type == 'list' %}
+  {{ bullets(s.bullets) }}
+  {%- endif %}
+</div>
+{% endfor %}
+
+</body>
+</html>

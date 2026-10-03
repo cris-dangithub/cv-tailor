@@ -1,0 +1,3 @@
+# Test tools, on top of requirements.txt:
+#     pipenv install --dev -r requirements-dev.txt
+pytest>=8.0

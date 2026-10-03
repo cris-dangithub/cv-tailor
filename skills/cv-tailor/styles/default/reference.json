@@ -1,0 +1,84 @@
+{
+  "_description": "Default style. One column; centred name and role; 3-column contact header; uppercase section titles over a solid black rule; entries with a dotted grey rule between header and content; optional 2-column block. Montserrat, A4, 2 pages max.",
+  "_origin": "Measured from a CV made in Google Docs (Skia PDF). Values in PostScript points except colours. They come from pdfinfo, pdffonts, pdftohtml -xml and pixel analysis at 130 dpi, not from eyeballing. Adjusted (not measured) values carry a _note.",
+  "page": {
+    "size": "A4",
+    "width": 596.0,
+    "height": 842.0,
+    "margin_top": 42.7,
+    "margin_right": 40.7,
+    "margin_bottom": 42.0,
+    "margin_left": 42.0,
+    "content_width": 510.2,
+    "target_pages": 2
+  },
+  "fonts": {
+    "family": "Montserrat",
+    "weights": ["400", "700", "400 italic", "700 italic"],
+    "bullet_l1": "●",
+    "bullet_l2": "○",
+    "_note_bullets": "Montserrat has no bullet glyphs; the original drew them with Arial. The CSS falls back to a system font only for the bullet.",
+    "license": "SIL Open Font License 1.1 (fonts/OFL.txt)"
+  },
+  "colors": {
+    "ink": "#000000",
+    "text": "#757070",
+    "link": "#4a86e8",
+    "dotted_rule": "#d9d9d9"
+  },
+  "sizes": {
+    "name": 20.5,
+    "role": 12.0,
+    "section": 10.7,
+    "entity": 10.7,
+    "group": 10.7,
+    "position": 9.3,
+    "body": 8.7,
+    "meta": 8.0,
+    "factsheet": 7.0,
+    "cert_link": 6.0,
+    "_note_name": "Measured 19.3 in the original, but pdftohtml rounds sizes to integers and the 700 cut of variable Montserrat is not exactly the static Bold. At 19.3 the name rendered 6% short; 20.5 matches the stroke height measured in pixels (16.0pt).",
+    "_note_factsheet": "Project fact line ('Stack: ...'). Not in the original; added so the line under a project title reads as secondary."
+  },
+  "rules": {
+    "section": {"style": "solid", "color": "#000000", "width": 1.1},
+    "entity": {"style": "dashed", "color": "#d9d9d9", "width": 0.55, "dash": 2.21, "gap": 2.21}
+  },
+  "columns": {
+    "left": 240.2,
+    "gutter": 14.4,
+    "right": 253.5,
+    "header_side_pct": 37,
+    "header_center_pct": 26,
+    "_note_header": "Both side columns MUST have the same width or the middle one is not centred on the page. 37/26/37 comes from the widest content of each column over 510.2pt."
+  },
+  "spacing": {
+    "name_to_role": 28.0,
+    "role_to_header": 28.0,
+    "header_leading": 10.3,
+    "section_to_rule": 16.4,
+    "rule_to_first_entry": 13.6,
+    "between_blocks": 25.0,
+    "bullet_indent": 13.3,
+    "section_above": 18.0,
+    "body_line_height": 1.32
+  },
+  "block_pattern": [
+    "Entity (700, sizes.entity)            ...  note on the right (italic, sizes.body)",
+    "Position (400, sizes.position)        ...  dates on the right (italic, sizes.body)",
+    "--- dotted rule, full width ---",
+    "Optional group (italic, sizes.group)",
+    "Bullets (400, sizes.body, hanging indent)"
+  ],
+  "verify": {
+    "min_chars": 800,
+    "margin_tolerance": {"left": 2.5, "right": 3.5, "top": 3.5},
+    "size_tolerance": 0.8,
+    "color_tolerance": 4,
+    "rules": [
+      {"name": "solid rule under section titles", "color": "#000000", "kind": "solid", "min_count": 1},
+      {"name": "dotted rules under entries", "color": "#d9d9d9", "kind": "dashed", "min_count": 2, "width": 510.2}
+    ],
+    "name_reference": null
+  }
+}

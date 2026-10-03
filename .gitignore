@@ -1,0 +1,16 @@
+# skill environment (created by `cvt.py setup-env` from requirements.txt)
+.venv/
+Pipfile
+Pipfile.lock
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# local test runs and personal data: a workspace never lives inside this repo
+/tmp/
+/workspace/
+/examples/**/applications/
+/examples/**/.cv-tailor/
+*.local.*

@@ -1,0 +1,17 @@
+{
+  "name": "cv-tailor",
+  "owner": {
+    "name": "cris-dangithub"
+  },
+  "metadata": {
+    "description": "cv-tailor: tailored CVs per job offer from your own knowledge pool."
+  },
+  "plugins": [
+    {
+      "name": "cv-tailor",
+      "source": "./",
+      "description": "Tailored CVs (PDF, several languages) for each job offer, from your own knowledge pool and in your own writing voice.",
+      "version": "0.1.0"
+    }
+  ]
+}

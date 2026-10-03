@@ -1,0 +1,77 @@
+# Example content YAML for the default style. FICTIONAL candidate (examples/sample-pool).
+# A value is plain text, or a list of chunks:
+#   {text: ..., url: ...}              -> normal link
+#   {text: ..., url: ..., cert: true}  -> small bold-italic link, for credentials
+# Bold is written as <strong>...</strong>.
+
+meta:
+  lang: en
+  name: Alex Rivera
+  role: Analytics Engineer
+  role_plain: Analytics Engineer
+
+header:
+  - left: "Valencia, Spain — remote within EU time zones"
+    center: "+34 600 000 000"
+    right:
+      - {text: Portfolio, url: "https://example.com/alex"}
+  - left: "<strong>Languages: Spanish (native), English C1</strong>"
+    center: "alex.rivera@example.com"
+    right:
+      - {text: GitHub, url: "https://github.com/example-alex"}
+
+sections:
+  - title: SUMMARY
+    type: prose
+    body: >-
+      Data engineer with five years of SQL and data modelling, the last three owning a dbt project
+      on BigQuery for finance. Built the tests that gate every merge, moved warehouse loads to
+      Airflow with SLAs, and brought report freshness from one day to 15 minutes with CDC.
+
+  - title: WORK EXPERIENCE
+    type: entries
+    entries:
+      - entity: Northwind Logistics
+        entity_note: "(Hybrid, Valencia)"
+        role: Data Engineer
+        dates: March 2023 – Present
+        bullets:
+          - Built the <strong>dbt project</strong> for the finance marts with <strong>merge-blocking tests</strong> in GitHub Actions.
+          - Moved the nightly warehouse load from cron scripts to <strong>Airflow 2</strong> with retries and SLAs.
+          - Cut failed loads from about six a month to <strong>one a quarter</strong>.
+          - Designed the <strong>CDC pipeline</strong> from PostgreSQL to BigQuery with Debezium and Pub/Sub.
+          - Brought finance reports from one day old to <strong>15-minute freshness</strong>.
+          - Mentored a junior analyst through their first <strong>dbt models</strong> over six months.
+
+      - entity: Tidewater Retail
+        entity_note: "(Madrid)"
+        role: Data Analyst
+        dates: June 2020 – February 2023
+        bullets:
+          - Replaced the weekly Excel sales report with a <strong>Looker dashboard</strong> used by 40 store managers.
+          - Automated the monthly supplier scorecard in <strong>Python and pandas</strong>, from two days to one hour.
+
+  - title: SKILLS
+    type: columns
+    left:
+      - title: In production
+        bullets:
+          - "<strong>Modelling:</strong> SQL, dbt (tests, CI), BigQuery, PostgreSQL"
+          - "<strong>Orchestration:</strong> Airflow 2, GitHub Actions"
+    right:
+      - title: Also used
+        bullets:
+          - "<strong>Streaming:</strong> Debezium, Pub/Sub"
+          - "<strong>BI and tooling:</strong> Looker, Python (pandas)"
+
+  - title: EDUCATION
+    type: entries
+    entries:
+      - entity: Universitat Politècnica de València — MSc Data Science
+        entity_note: "2019 — 2020"
+        lines:
+          - left:
+              - "Google Cloud Professional Data Engineer (2024) "
+              - {text: "(certificate)", url: "https://example.com/cert/gcp-pde", cert: true}
+      - entity: Universidad Complutense de Madrid — BSc Statistics
+        entity_note: "2015 — 2019"

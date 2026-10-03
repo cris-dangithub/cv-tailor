@@ -1,0 +1,12 @@
+{
+  "name": "cv-tailor",
+  "version": "0.1.0",
+  "description": "Tailored CVs (PDF, several languages) for each job offer, from your own knowledge pool and in your own writing voice. Searchable history of what you sent, feedback learning and custom styles.",
+  "author": {
+    "name": "cris-dangithub"
+  },
+  "homepage": "https://github.com/cris-dangithub/cv-tailor",
+  "repository": "https://github.com/cris-dangithub/cv-tailor",
+  "license": "MIT",
+  "keywords": ["cv", "resume", "job-application", "pdf", "ats", "career"]
+}

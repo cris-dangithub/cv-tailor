@@ -1,0 +1,188 @@
+/* ---------------------------------------------------------------------------
+   Default cv-tailor style.
+   No design value is typed here: build.py injects the :root block from
+   reference.json (through tokens.py). Changing the design = editing reference.json
+   or this file, never the content. A new CV version never edits this file.
+   --------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat-wght.ttf");
+  font-weight: 400 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat-Italic-wght.ttf");
+  font-weight: 400 700;
+  font-style: italic;
+}
+
+@page {
+  size: A4;
+  margin: var(--m-top) var(--m-right) var(--m-bottom) var(--m-left);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: var(--s-body);
+  line-height: var(--lh-body);
+  color: var(--c-text);
+}
+
+a { color: var(--c-link); text-decoration: none; }
+
+/* --- exact dotted rule: measured dash and gap, not the engine's dashed border --- */
+.dotted-rule {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--c-rule) 0 var(--dash),
+    transparent var(--dash) calc(var(--dash) * 2)
+  );
+  background-size: 100% var(--w-dotted);
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  padding-bottom: 2.4pt;
+  break-after: avoid;
+}
+
+/* =========================== HEADER =========================== */
+
+.name {
+  margin: 0;
+  font-size: var(--s-name);
+  font-weight: 700;
+  color: var(--c-ink);
+  text-align: center;
+  line-height: 1.1;
+}
+
+.role {
+  margin: var(--gap-name-role) 0 0;
+  font-size: var(--s-role);
+  font-weight: 400;
+  color: var(--c-ink);
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* three-column contact grid. Side columns MUST be equal or the centre one
+   is not centred on the page; widths come from the tokens. */
+.contact {
+  margin-top: var(--gap-role-header);
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--s-meta);
+}
+.contact td {
+  padding: 0;
+  line-height: var(--lh-header);
+  vertical-align: top;
+}
+.contact .col-left   { text-align: left;   width: var(--head-side); }
+.contact .col-center { text-align: center; width: var(--head-center); }
+.contact .col-right  { text-align: right;  width: var(--head-side); }
+.contact .col-right a { font-weight: 700; }
+.contact strong       { font-weight: 700; }
+
+/* =========================== SECTIONS ========================== */
+
+.section { margin-top: var(--gap-section-above); }
+.section > h2 {
+  margin: 0 0 var(--gap-section-rule);
+  padding: 0 0 2.6pt;
+  font-size: var(--s-section);
+  font-weight: 700;
+  color: var(--c-ink);
+  letter-spacing: .2pt;
+  text-transform: uppercase;
+  border-bottom: var(--w-section-rule) solid var(--c-ink);
+  break-after: avoid;
+}
+.section > h2 + * { margin-top: var(--gap-rule-entry); }
+
+/* ======================== ENTRY BLOCKS ======================== */
+
+.entry { margin-top: var(--gap-blocks); }
+.entry:first-of-type { margin-top: 0; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10pt;
+}
+.row > .l { flex: 1 1 auto; }
+.row > .r { flex: 0 0 auto; text-align: right; font-style: italic; }
+
+.entity      { font-size: var(--s-entity); font-weight: 700; }
+.entity-note { font-size: var(--s-body); }
+.position    { font-size: var(--s-position); font-weight: 400; }
+.dates       { font-size: var(--s-body); }
+
+/* content lines of a micro-section: BELOW the dotted rule,
+   with the same left/right pattern */
+.line {
+  font-size: var(--s-meta);
+  font-style: italic;
+  margin-top: 1.5pt;
+}
+
+.group {
+  break-after: avoid;
+  margin-top: 7pt;
+  font-size: var(--s-group);
+  font-style: italic;
+}
+
+/* ======================= LISTS AND BULLETS ===================== */
+
+ul.bullets {
+  margin: 4pt 0 0;
+  padding-left: var(--indent);
+  list-style: none;
+}
+ul.bullets > li {
+  position: relative;
+  margin-bottom: 1.2pt;
+  break-inside: avoid;
+}
+ul.bullets > li::before {
+  content: "\25CF";
+  position: absolute;
+  left: calc(var(--indent) * -1);
+  font-family: "DejaVu Sans", "Segoe UI Symbol", "Arial", sans-serif;
+  font-size: .92em;
+}
+ul.bullets ul.bullets > li::before { content: "\25CB"; }
+ul.bullets ul.bullets { margin-top: 1.2pt; }
+
+/* ===================== TWO-COLUMN SECTION ===================== */
+
+.columns { display: flex; gap: var(--gutter); break-inside: avoid; }
+.columns > .c-left  { width: var(--col-left); }
+.columns > .c-right { width: var(--col-right); }
+.columns h3 {
+  margin: 0 0 2pt;
+  font-size: var(--s-entity);
+  font-weight: 700;
+}
+
+/* ========================= SMALL PIECES ======================= */
+
+/* certificate links: smaller, bold italic, link colour */
+a.cert {
+  font-size: var(--s-cert);
+  font-weight: 700;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.prose { margin: 0; }
+
+/* project fact line: "Stack: ..." */
+.factsheet { font-size: var(--s-factsheet); line-height: 1.28; break-after: avoid; }
