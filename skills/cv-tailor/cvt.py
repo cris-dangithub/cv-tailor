@@ -17,6 +17,8 @@ Commands:
     fetch-offer ...     download a job offer to Markdown                 (scripts/fetch_offer.py)
     github ...          GitHub evidence cache for a github pool source   (scripts/pool_github.py)
     style ...           measure a reference CV / scaffold a new style    (scripts/extract_style.py)
+    report ID|--all     refresh the candidate-facing report.md           (scripts/report.py)
+    pool-writeback ...  snapshot / finish / diff / rollback pool updates (scripts/pool_writeback.py)
 
 Standard library only, so it works before the venv exists. Exit code 3 = environment missing.
 """
@@ -31,7 +33,8 @@ COMMANDS = {
     "workspace": "workspace.py", "index": "index.py", "build": "build.py", "verify": "verify.py",
     "sync-md": "sync_md.py", "voice": "voice.py", "extract": "extract_text.py",
     "fetch-offer": "fetch_offer.py", "github": "pool_github.py", "style": "extract_style.py",
-    "doctor": "doctor.py", "setup-env": "setup_env.py",
+    "doctor": "doctor.py", "setup-env": "setup_env.py", "report": "report.py",
+    "pool-writeback": "pool_writeback.py",
 }
 NO_VENV = {"setup-env", "doctor"}  # these must run with the system Python
 

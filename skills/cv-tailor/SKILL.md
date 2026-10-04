@@ -8,8 +8,9 @@ description: >
   recruiter replied and they don't remember what they applied with; when they give feedback
   on a generated application; when they update an application's status; when they want a new
   CV style from a sample CV or want to switch styles; and to set the skill up the first time.
+  Also when they want to undo or correct what was saved into their knowledge base.
   Never invents facts: everything comes from the pool or from the user's answers.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # cv-tailor
@@ -49,6 +50,7 @@ Written below as `cvt <command>`.
 | asks what they sent somewhere, or says a company replied | search past applications, show what was sent, offer to update the status | `references/applications.md` |
 | comments on a generated application ("on 000012 I didn't like...") | record feedback, learn a rule, offer a v2 | `references/feedback.md` |
 | reports progress (sent, interview, rejected, offer) | update the status | `references/applications.md` |
+| wants to undo or correct what was saved into their knowledge base | roll back or send a correction | `references/pool-writeback.md` |
 | shares a CV to copy its look, asks for another style, or to switch style | build or switch style (validated with the user) | `references/styles.md` |
 | wants to change languages, pool or other settings | update the config | `references/setup.md` ("Changing the configuration") |
 | wants to edit the content of an existing application | edit its YAML and rebuild | `references/pdf.md` ("Editing an existing version") |
@@ -64,8 +66,11 @@ When unsure whether a long pasted text is an offer, it is one if it describes a 
    not in the pool, in `learnings/facts.md`, or confirmed by the user in this session. A gap is
    declared, never filled. Unconfirmed items become `[PENDING: ...]` in the review file and are
    asked before the PDF is considered final.
-2. **The pool is read-only.** Never create, edit, move or delete anything in a pool source. The
-   skill writes only inside the workspace.
+2. **cv-tailor never writes into the pool.** Never create, edit, move or delete anything in a
+   pool source yourself. The only exception is delegated: when the pool is managed by a skill
+   whose rules allow updates, new facts from the candidate's answers are handed to **that**
+   skill, automatically, with a snapshot that allows undoing it (`references/pool-writeback.md`).
+   Everything else cv-tailor writes stays inside the workspace.
 3. **Authorship is checked before attributing.** Being in a repository or a team document does
    not make it the candidate's work (`references/evidence-github.md` for code).
 4. **Questions go in one batch**, short and concrete, with an example answer each. Answers that
@@ -105,6 +110,7 @@ Choosing the wrong material is not fixed by good wording; good wording is not fi
   styles/<name>/             styles created for this user (built-ins live in SKILL_DIR/styles)
   applications/index.jsonl   searchable index (rebuildable from each meta.json)
   applications/000001-company-role/
+      report.md                  the application report, for the candidate, always current
       offer.md  meta.json  positioning.md
       cv.en.yml  CV-Name-Company-EN.html  CV-Name-Company-EN.pdf  CV-Name-Company-EN-review.md
       feedback.md

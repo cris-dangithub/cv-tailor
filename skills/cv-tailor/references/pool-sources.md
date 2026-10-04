@@ -1,8 +1,9 @@
 # The knowledge pool
 
 The pool is everything the candidate pointed to during setup: folders (with subfolders), single
-files, links, GitHub. **It is external and read-only**: the skill never creates, hosts, edits or
-reorganises it. Only its location is stored, in `pool.sources` of the config.
+files, links, GitHub. **It is external**: cv-tailor never creates, hosts, edits or reorganises it.
+Only its location is stored, in `pool.sources` of the config. The one way the pool changes is
+through its own managing skill, when its rules allow it (`references/pool-writeback.md`).
 
 Facts the pool lacks are asked to the candidate and stored in `learnings/facts.md`, which is
 read as part of the pool from then on (and wins over older pool text).

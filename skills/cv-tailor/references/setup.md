@@ -41,8 +41,15 @@ only in English") without changing the setting.
 - **Pool skills.** If the pool has skills (`SKILL.md`), they are the preferred way to read it:
   tell the user which ones were found and that generation will use them through a reader agent
   (`references/pool-sources.md`).
-- The pool is **never** created, hosted, edited or reorganised by this skill. If it is thin,
-  say so; the missing facts will be asked per offer and stored in `learnings/facts.md`.
+- **Managing skill.** When `scan-pool` reports `manager_probe: needed`, run the manager probe
+  (`references/pool-writeback.md` step 1) and store it with `cvt workspace set-manager`. If a skill
+  allows updates, tell the user, in plain words, that what they answer before each CV will also
+  be saved in their knowledge base through that skill, automatically, and that any change can be
+  undone; they can turn it off (`cvt workspace set pool.writeback=off`). If several sources can be
+  updated, ask which one (`pool.writeback_source`).
+- The pool is **never** created, hosted or reorganised by this skill, and never edited by it
+  directly. If it is thin, say so; the missing facts will be asked per offer and stored in
+  `learnings/facts.md`.
 - Confirm the candidate's name as it must appear on CVs (from the pool; ask only if ambiguous).
 
 ## 4. Style (optional)
@@ -90,4 +97,7 @@ status, and how to use it: "paste an offer (or several, or links) here".
 | active style | see `references/styles.md` |
 | candidate name | `cvt workspace set candidate.name="Full Name"` |
 
-After a pool change, offer to re-measure the voice profile.
+| knowledge-base updates on / off | `cvt workspace set pool.writeback=auto` / `=off` |
+
+After a pool change, run `cvt workspace scan-pool --save` (it says whether the manager probe must be
+redone) and offer to re-measure the voice profile.

@@ -24,6 +24,11 @@ agent: 000014 Acme Mobility — Analytics Engineer  → CV-AlexRivera-AcmeMobili
 - **Tracks status**: sent, replied, interview, rejected, offer.
 - **Learns** from your feedback ("on 000012 I didn't like…") without drifting from what each
   offer asks.
+- **Teaches your knowledge base**: if your pool is managed by its own skill and allows updates,
+  the facts you confirm while preparing a CV are saved there through that skill, automatically,
+  without duplicates, and can be undone.
+- **Keeps a report per application** (`report.md`), written for you: status, your CVs, what was
+  decided and why, the questions you were asked and your answers.
 - **Styles**: a measured default style, or a new one copied from any CV you like (measured,
   previewed side by side, approved by you). The last chosen style stays active.
 
@@ -77,7 +82,8 @@ From then on, in that folder, pasting an offer is enough.
 ## Your data
 
 - **The pool is yours and stays where it is.** The skill only stores its location and never
-  writes to it.
+  writes to it; only the pool's own managing skill can update it, when its rules allow it, and
+  every update can be undone. Turn it off with `pool.writeback: off`.
 - **Everything the skill produces lives in your workspace**, never in this repository: config,
   applications, learned facts and preferences, voice profile, your styles.
 - One workspace = one person. Another person = another folder.
@@ -108,7 +114,7 @@ skills/cv-tailor/        the skill (this is what agents load)
   templates/workspace/   files the setup writes into a workspace
   cvt.py                 launcher: runs any script with the skill's venv
   requirements.txt
-examples/                a fictional candidate, offers and a sample CV YAML
+examples/                a fictional candidate, offers, a sample CV YAML and a pool managed by a skill
 tests/                   pytest suite
 ```
 

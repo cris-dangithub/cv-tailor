@@ -52,6 +52,10 @@ was paid, whether a technology was used in production, which personal projects t
 - Save each factual answer to `learnings/facts.md` (format in that file).
 - If the user does not answer something, continue with what is verified and keep it as
   `[PENDING: ...]` in the review file. Don't block all offers on one missing detail.
+- **Teach the pool.** Classify the answers (positive / correction / negative / decision /
+  preference / pending) and, if the pool has a managing skill that allows updates, hand the
+  positives, corrections and — only when the pool has a place for them — negatives to that skill,
+  in the background while the CVs are written: `references/pool-writeback.md`. Not asked, automatic.
 
 ## 6. Write each CV, per language
 
@@ -86,15 +90,28 @@ cvt index add-file <id> --lang en --kind pdf  --path CV-…-EN.pdf
 cvt index update <id> --summary "<2 lines: angle taken, main evidence>" --keywords "<8-15 terms from the offer and the CV>"
 ```
 
-## 8. Deliver
+## 8. The application report, then deliver
 
-In the UI language, short, per application:
+Each application has `report.md`, the report **for the candidate**, always current. Its automatic
+parts (status, CVs and their checks, knowledge-base updates, history) are refreshed by the
+scripts whenever something changes; refresh by hand with `cvt report <id>`.
 
-- id, company, role, and the PDF path of each language (links the user can click);
-- strong matches, partial ones, gaps (with the honest argument), what was left out and why;
-- what weighed for being recent and what entered despite being old;
-- anything still `[PENDING]` and links that need a manual check;
-- verification result (pages, checks).
+Write its middle part, between `<!-- cv-tailor:notes:start -->` and `<!-- cv-tailor:notes:end -->`,
+in the UI language, replacing the placeholders:
 
-Don't paste the CV in the chat; it is in the files. Remind once that feedback is welcome
-("tell me what you didn't like about 000012") and that the status can be updated when they send it.
+- **What I decided and why** — 3 to 6 bullets: the strongest matches, the gaps and how to argue
+  them, what was left out and why, what weighed for being recent or entered despite being old.
+- **The questions I asked you** — each question, the answer, and its effect in plain words
+  ("used it in the CV", "saved it in your knowledge base", "only for this application").
+- **Before you send it** — what is still pending or needs a manual check.
+- After a v2, one line per version saying what changed and why.
+
+Style: written for the person applying, not for a developer. Short sentences about **what** was
+done and **why**, never how: no commands, file paths (other than the PDF names), script names,
+check counts or jargon. *"I highlighted your dbt project because the offer asks for it first."*
+*"I left out your analyst years: they don't add to this role."*
+
+Then, in the chat, per application: 3–5 lines (id, company, role, the PDFs, the one thing to
+check before sending) and the link to its `report.md`. Don't paste the CV or the whole report.
+Remind once that feedback is welcome ("tell me what you didn't like about 000012") and that the
+status can be updated when they send it.

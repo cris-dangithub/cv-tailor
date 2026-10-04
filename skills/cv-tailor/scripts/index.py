@@ -91,6 +91,11 @@ def save_meta(ws, d: pathlib.Path, meta: dict) -> None:
     meta["updated"] = now()
     write_json(d / "meta.json", meta)
     rebuild_index(ws)
+    try:  # the candidate-facing report always reflects the current state
+        import report  # noqa: PLC0415
+        report.update(ws, d)
+    except Exception as e:  # noqa: BLE001  (a report problem must never block the index)
+        print(f"(report not refreshed: {e})")
 
 
 # --------------------------------------------------------------------------- numbering

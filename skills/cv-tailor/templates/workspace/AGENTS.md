@@ -8,6 +8,8 @@ This folder is a **cv-tailor workspace** (config in `.cv-tailor/config.yaml`).
   in one message mean several applications.
 - Use the same skill when the user wants to find a past application, gives feedback on one,
   updates its status, or asks for another CV style.
-- The knowledge pool listed in the config is read-only.
+- Never write into the knowledge pool yourself. Only its own managing skill may update it, as
+  the skill explains (pool write-back).
+- Each application folder has a `report.md` for the user: keep it current.
 - The skill lives at `{{skill_dir}}`. If your agent did not load it automatically, open
   `{{skill_dir}}/SKILL.md` and follow it step by step.

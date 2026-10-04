@@ -26,7 +26,7 @@ import logging
 
 logging.getLogger("pdfminer").setLevel(logging.ERROR)  # noisy FontBBox warnings on browser PDFs
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from common import find_workspace, read_json, read_yaml, resolve_style  # noqa: E402
+from common import find_workspace, now, read_json, read_yaml, resolve_style, write_json  # noqa: E402
 
 OK, FAIL, WARN = "  ok  ", " FAIL ", " warn "
 
@@ -328,6 +328,7 @@ def verify(pdf: pathlib.Path, style: str | None = None, content: pathlib.Path | 
     # ---- links
     urls = pdf_links(pdf)
     rep.info("links in the PDF", str(len(urls)))
+    broken, manual = [], []
     if check_links:
         for u in dict.fromkeys(urls):
             verdict, detail = check_url(u)
@@ -335,13 +336,24 @@ def verify(pdf: pathlib.Path, style: str | None = None, content: pathlib.Path | 
                 rep.check(f"link {u[:60]}", True, detail)
             elif verdict == "warn":
                 rep.warn(f"link {u[:60]}", detail)
+                manual.append(u)
             else:
                 rep.check(f"link {u[:60]}", False, detail)
+                broken.append(u)
 
     print("-" * 78)
     total_checks = sum(1 for i in rep.items if not i["warn"])
     print(f"{total_checks - rep.failures}/{total_checks} checks passed, "
           f"{sum(1 for i in rep.items if i['warn'])} warning(s)\n")
+
+    # plain summary next to the PDF, read by report.py for the application report
+    write_json(pdf.with_name(pdf.name + ".verify.json"), {
+        "date": now(), "pages": n, "target_pages": target, "fits": (n <= target) if target else None,
+        "failures": rep.failures, "failed": [i["check"] for i in rep.items if not i["ok"]],
+        "links": len(urls), "links_checked": check_links, "broken_links": broken,
+        "links_to_check_by_hand": manual,
+        "pending_markers": any("PENDING" in i["check"] for i in rep.items if i["warn"]),
+    })
     return rep
 
 

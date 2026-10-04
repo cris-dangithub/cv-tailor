@@ -37,9 +37,9 @@ half-remembered detail.
    generated here.
 3. If nothing scores: try again with the distinctive words only (company, product, city), with
    `--since` around the date they remember, or list the recent ones with `cvt index list`.
-4. Show the best match(es), per language: the PDF path (clickable), the date, the angle taken
-   (from `summary` / `positioning.md`), the CV headline and 3–4 key bullets, the status history,
-   and pending items it had. That is what they need before answering the recruiter.
+4. Show the best match(es): link its `report.md` (the candidate-facing report: status, CVs,
+   decisions, questions and answers) and summarise it in a few lines, plus the CV headline and
+   3–4 key bullets of the PDF that was sent. That is what they need before answering the recruiter.
 5. Ask whether to update the status (e.g. `replied` or `interview`) and record it with a note
    ("recruiter email, 2026-10-20"). Offer to prepare for the interview with the review file's
    "Interview defence" section.
@@ -48,4 +48,5 @@ half-remembered detail.
 
 `generated` (default after creating) → `sent` → `replied` → `interview` → `offer` / `rejected`
 (`withdrawn` if the candidate drops it). Statuses are free to jump; each change is appended to
-`status_history` with date and note. When the user says "I sent it", mark `sent`.
+`status_history` with date and note. When the user says "I sent it", mark `sent`. Every change
+refreshes the application's `report.md`.

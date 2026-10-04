@@ -10,6 +10,9 @@ Format:
 ## YYYY-MM-DD · from application 000000 · topic
 - Fact, in plain words, as the candidate stated it.
 - Source: candidate answer | candidate correction
+- Kind: positive | correction | negative
+- Pool: written <run> | already known | not sent (negative, no section) | not sent (no managing skill)
+        | rejected by manager (<reason>) | rolled back <run>
 ```
 
 <!-- entries below -->

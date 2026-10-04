@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0 — 2026-10-04
+
+- **The knowledge pool learns from your answers.** When the pool is managed by a skill whose
+  rules allow updates, the facts you confirm before a CV (and fact corrections given as
+  feedback) are handed to that skill automatically: new facts and corrections always, things
+  you haven't done only if the pool has a place for them. cv-tailor never writes into the pool
+  itself.
+- Every pool update is photographed before and after, and can be undone (all or per file);
+  files edited again later are never overwritten. `pool.writeback: off` disables it.
+- Manager probe stored in the config (`workspace set-manager`), re-requested when the pool's
+  skills change.
+- **Application report** (`report.md`) in every application, written for the person applying:
+  status, CVs, what was decided and why, questions and answers, knowledge-base updates, history.
+  Refreshed automatically on every change.
+- `verify` writes a small summary next to each PDF, used by the report.
+- New example: a fictional pool managed by a skill (`examples/sample-managed-pool`).
+
 ## 0.1.0 — 2026-10-03
 
 First public version.

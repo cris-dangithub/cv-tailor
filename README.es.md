@@ -23,6 +23,11 @@ agente: 000014 Acme Mobility — Analytics Engineer → CV-AlexRivera-AcmeMobili
 - **Encuentra lo que enviaste**: pegas el correo del reclutador y te dice qué CV le llegó.
 - **Lleva el estado**: enviada, respondida, entrevista, rechazada, oferta.
 - **Aprende** de tu feedback ("de la 000012 no me gustó…") sin apartarse de lo que pide cada oferta.
+- **Alimenta tu base de conocimiento**: si tu pool lo gestiona su propia skill y permite
+  actualizarlo, lo que confirmas al preparar un CV se guarda ahí a través de esa skill,
+  automáticamente, sin duplicar, y se puede deshacer.
+- **Mantiene un reporte por postulación** (`report.md`), escrito para ti: estado, tus CVs, qué se
+  decidió y por qué, las preguntas que se te hicieron y tus respuestas.
 - **Estilos**: uno por defecto, medido, o uno nuevo copiado de cualquier CV que te guste (medido,
   comparado lado a lado y aprobado por ti). Se mantiene el último que elegiste.
 
@@ -75,7 +80,9 @@ Desde ahí, en esa carpeta, basta con pegar una oferta.
 
 ## Tus datos
 
-- **El pool es tuyo y se queda donde está.** La skill solo guarda su ubicación y nunca escribe en él.
+- **El pool es tuyo y se queda donde está.** La skill solo guarda su ubicación y nunca escribe en él;
+  solo la skill que gestiona tu pool puede actualizarlo, si sus reglas lo permiten, y cada cambio
+  se puede deshacer. Se desactiva con `pool.writeback: off`.
 - **Todo lo que la skill produce vive en tu espacio de trabajo**, nunca en este repositorio:
   configuración, aplicaciones, hechos y preferencias aprendidos, perfil de voz, tus estilos.
 - Un espacio de trabajo = una persona. Otra persona = otra carpeta.

@@ -14,10 +14,12 @@ produces; the skill folder holds only the engine.
     workspace.py scan-pool [--save]                     # skills, documents, writing samples in the pool
     workspace.py styles                                 # built-in + workspace styles
     workspace.py refresh-instructions                   # rewrite the CLAUDE.md / AGENTS.md block
+    workspace.py set-manager --json '{"source":0,"skill":"kb","can_update":true,"has_not_done_section":false}'
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import pathlib
 import re
@@ -93,7 +95,8 @@ def cmd_init(a):
         "ui_language": a.ui_language,
         "cv_languages": [x.strip() for x in a.cv_languages.split(",") if x.strip()],
         "candidate": {"name": a.candidate or ""},
-        "pool": {"sources": [pool_entry(p) for p in a.pool or []], "skills": [], "inventory": {}},
+        "pool": {"sources": [pool_entry(p) for p in a.pool or []], "skills": [], "inventory": {},
+                 "writeback": "auto", "manager": None},
         "style": {"active": "default", "history": [{"style": "default", "date": today()}]},
         "numbering": {"width": 6},
         "skill_dir": str(SKILL_DIR),
@@ -214,16 +217,55 @@ def cmd_scan_pool(a):
         entry = {"index": i, "source": src}
         if src["type"] == "path":
             r = scan_path(pathlib.Path(src["path"]))
+            for s in r["skills"]:
+                s["source"] = i
             entry.update(r)
             all_skills += r["skills"]
         report.append(entry)
+    h = skills_hash(all_skills)
+    mgr = cfg.get("pool", {}).get("manager") or {}
+    status = {"skills_hash": h,
+              "manager_probe": ("needed" if all_skills and not mgr else
+                                "outdated: the pool skills changed, probe again" if mgr and mgr.get("skills_hash") != h
+                                else "up to date" if mgr else "not applicable: no skills in the pool")}
     if a.save:
         cfg.setdefault("pool", {})["skills"] = all_skills
+        cfg["pool"]["skills_hash"] = h
         cfg["pool"]["inventory"] = {"scanned": today(), "sources": [
             {k: v for k, v in e.items() if k in ("index", "documents_by_type", "writing_samples",
                                                   "style_guides", "instructions")} for e in report]}
         save_config(ws, cfg)
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    print(json.dumps({"sources": report, "status": status}, ensure_ascii=False, indent=2))
+
+
+def skills_hash(skills: list[dict]) -> str:
+    """Fingerprint of the pool's SKILL.md files: when it changes, the manager probe is stale."""
+    h = hashlib.sha256()
+    for s in sorted(skills, key=lambda x: x["path"]):
+        f = pathlib.Path(s["path"]) / "SKILL.md"
+        h.update(s["path"].encode())
+        if f.is_file():
+            h.update(f.read_bytes())
+    return h.hexdigest()[:16] if skills else ""
+
+
+def cmd_set_manager(a):
+    """Store the result of the manager probe (done by an agent reading the pool's skills)."""
+    ws = require_workspace(a.workspace)
+    cfg = load_config(ws)
+    data = json.loads(pathlib.Path(a.json_file).read_text(encoding="utf-8")) if a.json_file else json.loads(a.json)
+    required = {"source", "skill", "can_update", "has_not_done_section"}
+    missing = required - set(data)
+    if missing:
+        sys.exit(f"missing keys in the probe result: {sorted(missing)}")
+    pool = cfg.setdefault("pool", {})
+    data["checked_on"] = today()
+    data["skills_hash"] = pool.get("skills_hash") or skills_hash(pool.get("skills", []))
+    pool["manager"] = data
+    if data.get("can_update") and pool.get("writeback_source") is None:
+        pool["writeback_source"] = data["source"]
+    save_config(ws, cfg)
+    print(json.dumps(pool["manager"], ensure_ascii=False, indent=2))
 
 
 def cmd_add_pool(a):
@@ -268,6 +310,9 @@ def main(argv=None):
     p.add_argument("--save", action="store_true")
     sub.add_parser("styles")
     sub.add_parser("refresh-instructions")
+    p = sub.add_parser("set-manager", help="store the pool manager probe result")
+    p.add_argument("--json", default=None, help="probe result as a JSON string")
+    p.add_argument("--json-file", default=None, help="probe result in a JSON file")
     a = ap.parse_args(argv)
 
     if a.cmd == "find":
@@ -285,7 +330,7 @@ def main(argv=None):
         refresh_instructions(require_workspace(a.workspace))
         return
     {"init": cmd_init, "show": cmd_show, "set": cmd_set, "scan-pool": cmd_scan_pool,
-     "add-pool": cmd_add_pool, "remove-pool": cmd_remove_pool}[a.cmd](a)
+     "add-pool": cmd_add_pool, "remove-pool": cmd_remove_pool, "set-manager": cmd_set_manager}[a.cmd](a)
 
 
 if __name__ == "__main__":
