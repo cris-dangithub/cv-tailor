@@ -176,6 +176,11 @@ def record(ws, app: str, entry: dict) -> None:
         report.update(ws, d)
     except Exception as e:  # noqa: BLE001  (a report problem must never break the write-back)
         print(f"(report not refreshed: {e})")
+    try:
+        import sync_drive  # noqa: PLC0415
+        sync_drive.trigger(ws, int(app))
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def finish(ws, run: str, summary: str, not_sent: str) -> dict:

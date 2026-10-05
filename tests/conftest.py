@@ -13,6 +13,7 @@ EXAMPLES = ROOT / "examples"
 def ws(tmp_path, monkeypatch):
     """A fresh workspace pointing at the fictional sample pool."""
     monkeypatch.delenv("CV_TAILOR_WORKSPACE", raising=False)
+    monkeypatch.setenv("CV_TAILOR_SYNC", "off")  # never spawn background sync workers in tests
     import workspace  # noqa: PLC0415
     workspace.main(["init", "--root", str(tmp_path), "--ui-language", "es",
                     "--cv-languages", "en,es", "--pool", str(EXAMPLES / "sample-pool"),

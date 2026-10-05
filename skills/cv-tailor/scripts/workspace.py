@@ -99,6 +99,7 @@ def cmd_init(a):
                  "writeback": "auto", "manager": None},
         "style": {"active": "default", "history": [{"style": "default", "date": today()}]},
         "numbering": {"width": 6},
+        "sync": {"google_drive": {"enabled": False}},
         "skill_dir": str(SKILL_DIR),
     }
     (root / WS_MARKER).mkdir(exist_ok=True)

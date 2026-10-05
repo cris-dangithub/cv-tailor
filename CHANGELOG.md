@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-10-05
+
+- **Google Drive sync**, optional and set up during the first setup: a copy of the applications
+  in Drive with the same structure (`<folder>/applications/000001-company-role/...`). Uses
+  Google Drive for desktop (Windows, macOS) or an rclone remote (Linux); no credentials in the skill.
+- Runs automatically in the background on every change of an application; copies only what
+  changed; mirrors folder renames from renumbering; never deletes in Drive except `sync clean
+  --yes`, and only what it uploaded.
+- Local state per file and per run (`.cv-tailor/sync/`), so `cvt sync status` answers instantly.
+- Default content: PDFs, application report and offer; YAML, review and positioning optional.
+- `doctor` reports whether Google Drive is installed.
+
 ## 0.2.0 — 2026-10-04
 
 - **The knowledge pool learns from your answers.** When the pool is managed by a skill whose

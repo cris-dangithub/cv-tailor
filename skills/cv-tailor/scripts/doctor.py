@@ -62,6 +62,12 @@ def main():
     row("gh (GitHub CLI)", bool(gh), detail, False)
     so = soffice()
     row("LibreOffice", bool(so), so or "not installed (only to read DOCX reference CVs for new styles)", False)
+    from sync_drive import detect, installed_but_not_running  # noqa: PLC0415
+    drives = detect()
+    row("Google Drive", bool(drives),
+        ", ".join(d["root"] for d in drives) if drives else
+        ("installed but not running: open Google Drive" if installed_but_not_running()
+         else "not found (only needed to sync results: https://www.google.com/drive/download/)"), False)
 
     ws = find_workspace()
     if ws:

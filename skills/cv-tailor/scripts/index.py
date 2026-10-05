@@ -96,6 +96,16 @@ def save_meta(ws, d: pathlib.Path, meta: dict) -> None:
         report.update(ws, d)
     except Exception as e:  # noqa: BLE001  (a report problem must never block the index)
         print(f"(report not refreshed: {e})")
+    trigger_sync(ws, meta.get("id"))
+
+
+def trigger_sync(ws, app_id=None) -> None:
+    """Queue a background Google Drive sync (no-op when sync is off). Never blocks or fails."""
+    try:
+        import sync_drive  # noqa: PLC0415
+        sync_drive.trigger(ws, int(app_id) if app_id else None, everything=app_id is None)
+    except Exception as e:  # noqa: BLE001
+        print(f"(sync not queued: {e})")
 
 
 # --------------------------------------------------------------------------- numbering
@@ -121,6 +131,7 @@ def renumber(ws, new_width: int) -> None:
     cfg.setdefault("numbering", {})["width"] = new_width
     save_config(ws, cfg)
     rebuild_index(ws)
+    trigger_sync(ws)  # folders were renamed: the sync moves them in Drive too
     print(f"renumbered {len(dirs)} application(s) to {new_width} digits")
 
 

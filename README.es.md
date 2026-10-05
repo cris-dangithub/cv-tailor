@@ -28,6 +28,8 @@ agente: 000014 Acme Mobility — Analytics Engineer → CV-AlexRivera-AcmeMobili
   automáticamente, sin duplicar, y se puede deshacer.
 - **Mantiene un reporte por postulación** (`report.md`), escrito para ti: estado, tus CVs, qué se
   decidió y por qué, las preguntas que se te hicieron y tus respuestas.
+- **Google Drive (opcional)**: una copia de tus postulaciones en Drive con las mismas carpetas,
+  subida en segundo plano (Google Drive para escritorio, o rclone en Linux).
 - **Estilos**: uno por defecto, medido, o uno nuevo copiado de cualquier CV que te guste (medido,
   comparado lado a lado y aprobado por ti). Se mantiene el último que elegiste.
 
