@@ -29,8 +29,6 @@ agent: 000014 Acme Mobility — Analytics Engineer  → CV-AlexRivera-AcmeMobili
   without duplicates, and can be undone.
 - **Keeps a report per application** (`report.md`), written for you: status, your CVs, what was
   decided and why, the questions you were asked and your answers.
-- **Google Drive (optional)**: a copy of your applications in Drive with the same folders,
-  uploaded in the background (Google Drive for desktop, or rclone on Linux).
 - **Styles**: a measured default style, or a new one copied from any CV you like (measured,
   previewed side by side, approved by you). The last chosen style stays active.
 

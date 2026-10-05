@@ -10,7 +10,7 @@ description: >
   CV style from a sample CV or want to switch styles; and to set the skill up the first time.
   Also when they want to undo or correct what was saved into their knowledge base.
   Never invents facts: everything comes from the pool or from the user's answers.
-version: 0.3.0
+version: 0.2.0
 ---
 
 # cv-tailor
@@ -51,7 +51,6 @@ Written below as `cvt <command>`.
 | comments on a generated application ("on 000012 I didn't like...") | record feedback, learn a rule, offer a v2 | `references/feedback.md` |
 | reports progress (sent, interview, rejected, offer) | update the status | `references/applications.md` |
 | wants to undo or correct what was saved into their knowledge base | roll back or send a correction | `references/pool-writeback.md` |
-| asks about Google Drive (turn it on, "is it uploaded?", sync now, clean up) | set up or check the sync | `references/sync.md` |
 | shares a CV to copy its look, asks for another style, or to switch style | build or switch style (validated with the user) | `references/styles.md` |
 | wants to change languages, pool or other settings | update the config | `references/setup.md` ("Changing the configuration") |
 | wants to edit the content of an existing application | edit its YAML and rebuild | `references/pdf.md` ("Editing an existing version") |
@@ -108,7 +107,6 @@ Choosing the wrong material is not fixed by good wording; good wording is not fi
   profile/voice.md           the candidate's measured voice (+ voice.<lang>.json, samples/)
   learnings/facts.md         facts confirmed by the candidate (part of the pool from then on)
   learnings/preferences.md   rules learned from feedback
-  .cv-tailor/sync/           Google Drive sync state (what is uploaded, when, errors)
   styles/<name>/             styles created for this user (built-ins live in SKILL_DIR/styles)
   applications/index.jsonl   searchable index (rebuildable from each meta.json)
   applications/000001-company-role/

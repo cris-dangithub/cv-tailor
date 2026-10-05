@@ -1,6 +1,6 @@
 {
   "name": "cv-tailor",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "description": "Tailored CVs (PDF, several languages) for each job offer, from your own knowledge pool and in your own writing voice. Searchable history of what you sent, feedback learning and custom styles.",
   "author": {
     "name": "cris-dangithub"

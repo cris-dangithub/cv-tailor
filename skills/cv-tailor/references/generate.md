@@ -113,7 +113,5 @@ check counts or jargon. *"I highlighted your dbt project because the offer asks 
 
 Then, in the chat, per application: 3–5 lines (id, company, role, the PDFs, the one thing to
 check before sending) and the link to its `report.md`. Don't paste the CV or the whole report.
-If Google Drive sync is on, say in a few words whether it is already there (`cvt sync status
---app <id>`; it uploads in the background, so "it's on its way to Drive" is a fine answer).
 Remind once that feedback is welcome ("tell me what you didn't like about 000012") and that the
 status can be updated when they send it.

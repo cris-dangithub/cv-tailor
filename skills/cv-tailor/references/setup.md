@@ -80,18 +80,10 @@ Sources in priority order: a style guide or writing-style skill in the pool → 
 candidate wrote in the pool → 1–3 pasted samples (ask; save them to `profile/samples/`) →
 none (say so; CVs will be factual and neutral).
 
-## 7. Google Drive (optional)
-
-> Do you want a copy of your CVs in Google Drive? (same folders as here, updated automatically)
-
-Yes → follow "Setup" in `references/sync.md`: detect Google Drive on this computer, confirm it,
-ask the folder (default `cv-tailor`) and what to sync (default: PDFs, application report, offer).
-Not installed → explain how to install it and leave it off; it can be turned on any time.
-
-## 8. Close
+## 7. Close
 
 Summarise in the UI language: languages, pool sources (and pool skills found), style, voice
-status, Google Drive (on/off and folder), and how to use it: "paste an offer (or several, or links) here".
+status, and how to use it: "paste an offer (or several, or links) here".
 
 ---
 
@@ -106,7 +98,6 @@ status, Google Drive (on/off and folder), and how to use it: "paste an offer (or
 | candidate name | `cvt workspace set candidate.name="Full Name"` |
 
 | knowledge-base updates on / off | `cvt workspace set pool.writeback=auto` / `=off` |
-| Google Drive sync: turn on, change folder or what is synced / turn off | `references/sync.md` (`cvt sync setup ...` / `cvt sync disable`) |
 
 After a pool change, run `cvt workspace scan-pool --save` (it says whether the manager probe must be
 redone) and offer to re-measure the voice profile.
