@@ -1,12 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { Moon, Sun, SunMoon } from "lucide-react";
+import { LogOut, Moon, Sun, SunMoon } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, useLocation, useOutlet } from "react-router-dom";
 import { useI18n } from "../i18n";
 import type { Key } from "../i18n/en";
 import { api } from "../lib/api";
 import { cx } from "../lib/format";
+import type { Me } from "../lib/types";
 import { useConnected, useNotices } from "../lib/live";
 import { applyTheme, storedTheme, type Theme } from "../lib/theme";
 
@@ -17,6 +18,7 @@ const NAV: { to: string; key: Key; mobile: boolean }[] = [
   { to: "/chat", key: "nav.chat", mobile: true },
   { to: "/styles", key: "nav.styles", mobile: false },
   { to: "/settings", key: "nav.settings", mobile: true },
+  { to: "/users", key: "nav.users", mobile: false },
 ];
 
 function section(path: string) {
@@ -32,6 +34,8 @@ export function Shell() {
   const ws = useQuery({ queryKey: ["workspace"], queryFn: api.workspace });
   const threads = useQuery({ queryKey: ["threads"], queryFn: api.threads });
   const online = useConnected();
+  const me = useQuery<Me>({ queryKey: ["me"], queryFn: api.me, staleTime: 60_000 });
+  const nav = NAV.filter((n) => n.to !== "/users" || me.data?.is_admin);
   const needsYou = (threads.data ?? []).filter((x) => x.status === "waiting" || (x.unread && x.status !== "running")).length;
   const working = (threads.data ?? []).some((x) => x.status === "running");
 
@@ -39,6 +43,7 @@ export function Shell() {
     if (to === "/applications" && ws.data) return <span className="nav-count tabular">{ws.data.total}</span>;
     if (to === "/chat" && needsYou) return <span className="nav-dot" aria-label={String(needsYou)} />;
     if (to === "/chat" && working) return <span className="nav-pulse" aria-hidden />;
+    if (to === "/users" && me.data?.pending_users) return <span className="nav-dot" aria-label={String(me.data.pending_users)} />;
     return null;
   };
 
@@ -53,7 +58,7 @@ export function Shell() {
           <span className="wordmark-tailor">tailor</span>
         </Link>
         <nav className="rail-nav" aria-label="Main">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.to === "/"} className="rail-link">
               {({ isActive }) => (
                 <>
@@ -72,20 +77,24 @@ export function Shell() {
           ))}
         </nav>
         <div className="rail-foot">
-          {ws.data && (
-            <p className="rail-who">
-              <span className="rail-name">{ws.data.candidate || ws.data.name}</span>
+          <p className="rail-who">
+            <span className="rail-name">{me.data?.user}</span>
+            {ws.data && (
               <span className="muted small" title={ws.data.path}>
-                {ws.data.name}
+                {ws.data.candidate || ws.data.name}
               </span>
-            </p>
-          )}
-          <ThemeToggle />
+            )}
+          </p>
+          <div className="rail-tools">
+            <ThemeToggle />
+            <SignOut />
+          </div>
         </div>
       </aside>
 
       <main id="main" className="stage">
         <SignInNotice />
+        {me.data?.default_admin_password && <p className="signin admin-default" role="alert">{t("auth.defaultPassword")}</p>}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={section(location.pathname)}
@@ -167,6 +176,27 @@ function SignInNotice() {
         </motion.aside>
       )}
     </AnimatePresence>
+  );
+}
+
+export function SignOut({ withLabel = false }: { withLabel?: boolean }) {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  return (
+    <button
+      type="button"
+      className={cx("btn quiet small", !withLabel && "icon")}
+      aria-label={t("auth.signOut")}
+      title={t("auth.signOut")}
+      onClick={async () => {
+        await api.logout().catch(() => {});
+        qc.clear();
+        window.location.assign("/");
+      }}
+    >
+      <LogOut size={16} strokeWidth={1.6} aria-hidden />
+      {withLabel && t("auth.signOut")}
+    </button>
   );
 }
 

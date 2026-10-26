@@ -98,6 +98,10 @@ export function connectLive(qc: QueryClient, onThreadFinished: (t: Thread, befor
         case "health":
           qc.invalidateQueries({ queryKey: ["health"] });
           break;
+        case "users":
+          qc.invalidateQueries({ queryKey: ["users"] });
+          qc.invalidateQueries({ queryKey: ["me"] });
+          break;
         case "threads":
           qc.invalidateQueries({ queryKey: ["threads"] });
           break;

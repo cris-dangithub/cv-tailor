@@ -86,8 +86,17 @@ The same work from a browser, or from your phone, instead of a chat window:
 ```bash
 python skills/cv-tailor/cvt.py setup-env --web    # once
 python skills/cv-tailor/cvt.py web                # run it inside your workspace: http://127.0.0.1:8765
-python skills/cv-tailor/cvt.py web --lan          # also your phone on the same Wi-Fi (link + QR with a token)
+python skills/cv-tailor/cvt.py web --lan          # also your phone on the same Wi-Fi (address + QR)
+python skills/cv-tailor/cvt.py web --public       # from anywhere, behind a tunnel such as `ngrok http 8765`
 ```
+
+**Accounts.** Everyone signs in, and the session lasts until they sign out.
+
+- The superuser is set with `CVT_ADMIN_USER` and `CVT_ADMIN_PASSWORD`, as environment
+  variables or in `<workspace>/.cv-tailor/web/.env`.
+- Without them it is `admin` / `admin`, and `--lan` / `--public` refuse to start.
+- Anyone can create an account. The first one is active at once; later ones wait until the
+  superuser approves them on the Users screen.
 
 - **Desk**: paste one or more offers or links. Each one gets its own agent session, and up to
   N run in parallel.

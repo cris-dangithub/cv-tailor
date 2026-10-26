@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pathlib
-import secrets
 
 from common import WS_MARKER, read_json, write_json
 
@@ -47,10 +46,3 @@ def save(ws, changes: dict) -> dict:
     write_json(web_dir(ws) / "settings.json", cur)
     return cur
 
-
-def token(ws) -> str:
-    """The LAN access token, created once and kept so the phone's link keeps working."""
-    p = web_dir(ws) / "token"
-    if not p.is_file():
-        p.write_text(secrets.token_urlsafe(24), encoding="utf-8")
-    return p.read_text(encoding="utf-8").strip()

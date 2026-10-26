@@ -11,7 +11,7 @@ import type { Key } from "../i18n/en";
 import { api } from "../lib/api";
 import { ago, cx, folio } from "../lib/format";
 import { useStream } from "../lib/live";
-import type { Msg, PermissionCard, Thread, ThreadDetail } from "../lib/types";
+import type { Me, Msg, PermissionCard, Thread, ThreadDetail } from "../lib/types";
 
 function useMedia(query: string) {
   return useSyncExternalStore(
@@ -239,12 +239,13 @@ function Conversation({ tid }: { tid: string }) {
 
 function Message({ msg }: { msg: Msg }) {
   const { t } = useI18n();
+  const me = useQueryClient().getQueryData<Me>(["me"]);
   const [open, setOpen] = useState(false);
   if (msg.role === "user") {
     const long = msg.text.length > 600;
     return (
       <div className="msg-user">
-        <span className="msg-who">{t("chat.you")}</span>
+        <span className="msg-who">{!msg.author || msg.author === me?.user ? t("chat.you") : msg.author}</span>
         <p className={cx(long && !open && "clamped")}>{msg.text}</p>
         {long && (
           <button type="button" className="link small" onClick={() => setOpen((o) => !o)}>

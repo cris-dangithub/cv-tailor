@@ -666,12 +666,22 @@
 .settings {
   max-width: 860px;
 }
-.settings-styles-link {
+/* on a phone the rail is gone: styles, users and sign out live at the top of Settings */
+.settings-links {
   display: none;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 10px 22px;
   align-items: center;
   margin: -12px 0 28px;
+}
+.settings-styles-link {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
   text-decoration: none;
+}
+.settings-signout {
+  margin-left: auto;
 }
 .saved {
   font-size: 0.875rem;
@@ -791,8 +801,8 @@
 }
 
 @media (max-width: 760px) {
-  .settings-styles-link {
-    display: inline-flex;
+  .settings-links {
+    display: flex;
   }
   .threads-new-label {
     display: none;
@@ -877,4 +887,172 @@
 }
 .threads {
   overflow-x: hidden;
+}
+.admin-default {
+  display: block;
+}
+
+/* ================================================================== sign in */
+.boot {
+  min-height: 100dvh;
+  background: var(--paper);
+}
+.login {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 1fr);
+  min-height: 100dvh;
+}
+.login-side {
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(32px, 6vw, 80px);
+  background: var(--paper-2);
+  border-right: 1px solid var(--rule);
+  overflow: hidden;
+}
+.login-mark {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 11vw, 10rem);
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+}
+.login-mark .wordmark-tailor {
+  display: block;
+  margin-left: 0.32em;
+}
+.login-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  max-width: 460px;
+  padding: clamp(32px, 6vw, 80px);
+}
+.login-title {
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+}
+.login-tabs {
+  margin-top: 10px;
+}
+.login-lede {
+  min-height: 3em;
+  max-width: 42ch;
+}
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+.login-message {
+  font-size: 0.875rem;
+  overflow: hidden;
+}
+.login-message.error {
+  color: var(--danger);
+}
+.login-message.ok {
+  color: var(--st-offer);
+}
+.login-submit {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+/* ================================================================== users */
+.users {
+  max-width: 980px;
+}
+.users-super {
+  margin: -18px 0 22px;
+}
+.user-list {
+  list-style: none;
+  padding: 0;
+  border-top: 1px solid var(--ink);
+}
+.user-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px auto;
+  gap: 8px 20px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.user-row.pending {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent-wash) 70%, transparent), transparent 70%);
+  padding-left: 12px;
+}
+.user-row.disabled .user-name {
+  color: var(--ink-3);
+}
+.user-name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 440;
+  line-height: 1.2;
+}
+.user-meta {
+  display: flex;
+  flex-wrap: wrap;
+}
+.user-meta > * + *::before {
+  content: "·";
+  margin: 0 8px;
+}
+.user-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.user-pw {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.user-pw .input {
+  min-height: 34px;
+  width: 200px;
+}
+.user-error {
+  grid-column: 1 / -1;
+}
+.btn.danger {
+  --btn-fg: var(--danger);
+}
+.rail-tools {
+  display: flex;
+  gap: 2px;
+}
+
+@media (max-width: 760px) {
+  .login {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .login-side {
+    padding: 28px 16px 0;
+    background: none;
+    border: 0;
+  }
+  .login-mark {
+    font-size: 2.75rem;
+  }
+  .login-mark .wordmark-tailor {
+    display: inline;
+    margin-left: 0;
+  }
+  .login-main {
+    justify-content: flex-start;
+    padding: 28px 16px 48px;
+  }
+  .user-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .user-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+  .user-pw {
+    flex-wrap: wrap;
+  }
 }

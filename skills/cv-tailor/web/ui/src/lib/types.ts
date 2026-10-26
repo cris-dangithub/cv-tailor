@@ -85,12 +85,12 @@ interface Base {
 }
 
 export type Msg =
-  | (Base & { role: "user"; text: string; effort?: string })
+  | (Base & { role: "user"; text: string; effort?: string; author?: string })
   | (Base & { role: "assistant"; text: string })
   | (Base & { role: "tool"; tool_use_id: string; name: string; summary: string })
   | (Base & { role: "tool_result"; tool_use_id: string; is_error: boolean; text: string })
   | (Base & { role: "permission" } & PermissionCard)
-  | (Base & { role: "decision"; request_id: string; allow: boolean })
+  | (Base & { role: "decision"; request_id: string; allow: boolean; by?: string })
   | (Base & { role: "event"; kind: "compacted" | "error" | "interrupted" | "auth"; text?: string });
 
 export interface ThreadDetail extends Thread {
@@ -118,7 +118,25 @@ export interface Workspace {
   counts: Record<Status, number>;
   total: number;
   local: boolean;
+  public: boolean;
   lan: { enabled: boolean; urls: string[] } | null;
+}
+
+export interface Me {
+  user: string;
+  is_admin: boolean;
+  default_admin_password: boolean;
+  pending_users: number;
+}
+
+export interface UserRow {
+  username: string;
+  status: "pending" | "active" | "disabled";
+  created: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  sessions: number;
+  last_seen: string | null;
 }
 
 export interface Settings {

@@ -4,12 +4,13 @@ import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Failed, Loading, PageHead } from "../components/Bits";
+import { SignOut } from "../components/Shell";
 import { Segmented } from "../components/Segmented";
 import { LANGUAGES, useI18n } from "../i18n";
 import type { Key } from "../i18n/en";
 import { api } from "../lib/api";
 import { applyTheme, storedTheme, type Theme } from "../lib/theme";
-import type { Settings as SettingsData } from "../lib/types";
+import type { Me, Settings as SettingsData } from "../lib/types";
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
@@ -28,6 +29,7 @@ export function Settings() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["settings"], queryFn: api.settings });
   const ws = useQuery({ queryKey: ["workspace"], queryFn: api.workspace });
+  const me = qc.getQueryData<Me>(["me"]);
   const [saved, setSaved] = useState(false);
   const [theme, setTheme] = useState<Theme>(storedTheme());
   const [model, setModel] = useState("");
@@ -61,10 +63,22 @@ export function Settings() {
         }
       />
 
-      <Link to="/styles" className="settings-styles-link link">
-        {t("nav.styles")}
-        <ArrowRight size={14} strokeWidth={1.7} aria-hidden />
-      </Link>
+      <nav className="settings-links">
+        <Link to="/styles" className="settings-styles-link link">
+          {t("nav.styles")}
+          <ArrowRight size={14} strokeWidth={1.7} aria-hidden />
+        </Link>
+        {me?.is_admin && (
+          <Link to="/users" className="settings-styles-link link">
+            {t("nav.users")}
+            {me.pending_users > 0 && <span className="nav-dot" aria-label={String(me.pending_users)} />}
+            <ArrowRight size={14} strokeWidth={1.7} aria-hidden />
+          </Link>
+        )}
+        <span className="settings-signout">
+          <SignOut withLabel />
+        </span>
+      </nav>
 
       <section className="set-section">
         <h2 className="side-title">{t("settings.agent")}</h2>
@@ -134,6 +148,11 @@ export function Settings() {
 
       <section className="set-section">
         <h2 className="side-title">{t("settings.lan")}</h2>
+        {ws.data?.public && (
+          <Row label={t("settings.public")}>
+            <span className="muted small">{t("settings.publicOn")}</span>
+          </Row>
+        )}
         {!ws.data?.lan ? (
           <p className="muted set-copy">{t("settings.lanRemote")}</p>
         ) : !ws.data.lan.enabled ? (

@@ -93,13 +93,14 @@ class Runner:
         return True
 
     # ----------------------------------------------------------------------- api
-    async def send(self, tid: str, text: str, effort: str | None = None, shown: str | None = None):
+    async def send(self, tid: str, text: str, effort: str | None = None, shown: str | None = None,
+                   author: str = ""):
         t = self.store.get(tid)
         effort = effort or t.get("effort") or settings.load(self.ws)["effort"]
         if effort not in settings.EFFORTS:
             raise ValueError(f"effort must be one of {settings.EFFORTS}")
         msg = self.store.append(tid, {"role": "user", "text": shown if shown is not None else text,
-                                      "effort": effort})
+                                      "effort": effort, "author": author})
         self.bus.emit("message", thread=tid, message=msg)
         self.stopping.discard(tid)
         self._set(tid, status="queued", effort=effort, error=None)
@@ -131,7 +132,7 @@ class Runner:
     def pending_for(self, tid: str) -> list[dict]:
         return [p["card"] for p in self.pending.values() if p["thread"] == tid and not p["future"].done()]
 
-    def answer(self, req_id: str, allow: bool, remember: bool) -> bool:
+    def answer(self, req_id: str, allow: bool, remember: bool, by: str = "") -> bool:
         p = self.pending.get(req_id)
         if not p or p["future"].done():
             return False
@@ -140,6 +141,7 @@ class Runner:
             key = p["card"]["rule"]
             if key not in cur["always_allow"]:
                 settings.save(self.ws, {"always_allow": [*cur["always_allow"], key]})
+        p["by"] = by
         p["future"].set_result(allow)
         return True
 
@@ -189,8 +191,8 @@ class Runner:
         except asyncio.TimeoutError:
             allow = False
         finally:
-            self.pending.pop(req, None)
-        self._add(tid, {"role": "decision", "request_id": req, "allow": allow})
+            entry = self.pending.pop(req, None) or {}
+        self._add(tid, {"role": "decision", "request_id": req, "allow": allow, "by": entry.get("by", "")})
         if tid in self.stopping:
             return PermissionResultDeny(message="The user stopped this conversation.", interrupt=True)
         self._set(tid, status="running")

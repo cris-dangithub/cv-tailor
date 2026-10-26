@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 import index  # noqa: E402
 from conftest import EXAMPLES  # noqa: E402
-from webapp import permissions, settings  # noqa: E402
+from webapp import permissions  # noqa: E402
 from webapp.app import create_app  # noqa: E402
 
 
@@ -27,8 +27,8 @@ class FakeRunner:
     async def health(self):
         return {"cli": "claude", "logged_in": True}
 
-    async def send(self, tid, text, effort=None, shown=None):
-        self.sent.append((tid, text, effort))
+    async def send(self, tid, text, effort=None, shown=None, author=""):
+        self.sent.append((tid, text, effort, author))
 
     async def stop(self, tid):
         pass
@@ -36,8 +36,8 @@ class FakeRunner:
     def pending_for(self, tid):
         return []
 
-    def answer(self, req, allow, remember):
-        self.answers.append((req, allow, remember))
+    def answer(self, req, allow, remember, by=""):
+        self.answers.append((req, allow, remember, by))
         return req == "known"
 
 
@@ -46,11 +46,25 @@ def new(ws, company, role):
     return index.app_dirs(ws)[-1]
 
 
+ADMIN = {"username": "boss", "password": "a long admin secret"}
+
+
+@pytest.fixture(autouse=True)
+def admin_env(monkeypatch):
+    monkeypatch.setenv("CVT_ADMIN_USER", ADMIN["username"])
+    monkeypatch.setenv("CVT_ADMIN_PASSWORD", ADMIN["password"])
+
+
+def login(c, username, password):
+    return c.post("/api/auth/login", json={"username": username, "password": password})
+
+
 @pytest.fixture
 def client(ws):
     runner = FakeRunner()
     with TestClient(create_app(ws, runner=runner)) as c:
         c.runner = runner
+        assert login(c, **ADMIN).status_code == 200
         yield c
 
 
@@ -110,6 +124,7 @@ def test_offers_open_one_thread_each(client):
     threads = r.json()
     assert [t["title"] for t in threads] == ["Data Engineer at Acme", "jobs.example.com/42"]
     assert [s[2] for s in client.runner.sent] == ["medium", "medium"]
+    assert client.runner.sent[0][3] == "boss"
     assert "<offer>" in client.runner.sent[0][1] and "jobs.example.com/42" in client.runner.sent[1][1]
     assert client.post("/api/offers", json={"items": [{"text": "  "}]}).status_code == 400
 
@@ -137,6 +152,7 @@ def test_settings_are_validated(client):
 
 def test_permission_answers_reach_the_runner(client):
     assert client.post("/api/permissions/known", json={"allow": True, "remember": True}).status_code == 200
+    assert client.runner.answers[-1] == ("known", True, True, "boss")
     assert client.post("/api/permissions/gone", json={"allow": False}).status_code == 404
 
 
@@ -147,18 +163,98 @@ def test_foreign_hosts_and_origins_are_refused(ws, client):
     assert r.status_code == 403
 
 
-def test_lan_clients_need_the_token(ws):
-    app = create_app(ws, lan=True, lan_hosts=["192.168.1.20"], runner=FakeRunner())
-    with TestClient(app, client=("192.168.1.50", 5000)) as c:
-        headers = {"host": "192.168.1.20:8765"}
-        assert c.get("/api/workspace", headers=headers).status_code == 401
-        r = c.get(f"/?t={settings.token(ws)}", headers=headers, follow_redirects=False)
-        assert r.status_code == 303 and "cvt_token" in r.headers["set-cookie"]
-        c.cookies.set("cvt_token", settings.token(ws))
-        assert c.get("/api/workspace", headers=headers).status_code == 200
-    app = create_app(ws, lan=False, runner=FakeRunner())
-    with TestClient(app, client=("192.168.1.50", 5000)) as c:
-        assert c.get("/api/workspace").status_code == 403
+def test_everything_needs_a_session(ws):
+    with TestClient(create_app(ws, runner=FakeRunner())) as c:
+        for path in ("/api/applications", "/api/workspace", "/api/events", "/api/auth/me", "/api/pdfs"):
+            assert c.get(path).status_code == 401, path
+        assert c.get("/api/health").status_code == 200
+        assert login(c, "boss", "wrong").status_code == 401
+        r = login(c, **ADMIN)
+        assert r.status_code == 200 and r.json()["is_admin"] is True
+        cookie = r.headers["set-cookie"].lower()
+        assert "httponly" in cookie and "max-age=315360000" in cookie
+        assert c.get("/api/applications").status_code == 200
+        assert c.post("/api/auth/logout").status_code == 200
+        assert c.get("/api/applications").status_code == 401
+
+
+def test_first_account_is_free_later_ones_wait_for_approval(ws):
+    app = create_app(ws, runner=FakeRunner())
+    with TestClient(app) as first, TestClient(app) as second, TestClient(app) as boss:
+        r = first.post("/api/auth/register", json={"username": "Ana", "password": "password-ana"})
+        assert r.status_code == 200 and r.json()["user"] == "ana"
+        assert first.get("/api/applications").status_code == 200
+        assert first.get("/api/users").status_code == 403
+
+        r = second.post("/api/auth/register", json={"username": "bruno", "password": "password-bruno"})
+        assert r.json() == {"status": "pending"}
+        assert login(second, "bruno", "password-bruno").json()["error"] == "pending_approval"
+        assert second.post("/api/auth/register", json={"username": "boss", "password": "whatever-1"}).status_code == 409
+        assert second.post("/api/auth/register", json={"username": "x", "password": "password-x"}).status_code == 400
+        assert second.post("/api/auth/register", json={"username": "carla", "password": "short"}).status_code == 400
+
+        login(boss, **ADMIN)
+        assert boss.get("/api/auth/me").json()["pending_users"] == 1
+        users = boss.get("/api/users").json()
+        assert [(u["username"], u["status"]) for u in users] == [("bruno", "pending"), ("ana", "active")]
+        boss.post("/api/users/bruno/approve")
+        assert login(second, "bruno", "password-bruno").status_code == 200
+        assert next(u for u in boss.get("/api/users").json() if u["username"] == "bruno")["approved_by"] == "boss"
+
+        # disabling or a new password signs the user out everywhere
+        boss.post("/api/users/ana/disable")
+        assert first.get("/api/applications").status_code == 401
+        assert login(first, "ana", "password-ana").json()["error"] == "disabled"
+        boss.post("/api/users/ana/enable")
+        boss.post("/api/users/bruno/password", json={"password": "a-new-password"})
+        assert second.get("/api/applications").status_code == 401
+        assert login(second, "bruno", "a-new-password").status_code == 200
+        assert boss.delete("/api/users/boss").status_code == 404  # the superuser lives in the environment
+
+
+def test_repeated_failures_are_slowed_down(ws):
+    with TestClient(create_app(ws, runner=FakeRunner())) as c:
+        codes = [login(c, "boss", f"guess-{i}").status_code for i in range(6)]
+        assert codes[:5] == [401] * 5 and codes[5] == 429
+        assert login(c, **ADMIN).status_code == 429  # still waiting, even with the right password
+
+
+def test_public_mode_accepts_any_host_but_still_needs_a_session(ws):
+    with TestClient(create_app(ws, runner=FakeRunner())) as c:
+        assert c.get("/api/workspace", headers={"host": "abc.ngrok-free.app"}).status_code == 421
+    with TestClient(create_app(ws, runner=FakeRunner(), public=True), base_url="https://testserver") as c:
+        tunnel = {"host": "abc.ngrok-free.app", "x-forwarded-for": "203.0.113.9", "x-forwarded-proto": "https"}
+        assert c.get("/api/workspace", headers=tunnel).status_code == 401
+        assert c.get("/", headers=tunnel).status_code in (200, 500)  # the sign-in page itself is open
+        r = c.post("/api/auth/login", json=ADMIN, headers={**tunnel, "origin": "https://abc.ngrok-free.app"})
+        assert r.status_code == 200 and "secure" in r.headers["set-cookie"].lower()
+        info = c.get("/api/workspace", headers=tunnel).json()
+        assert info["local"] is False and info["lan"] is None
+        new(ws, "Acme", "Engineer")
+        assert c.post("/api/applications/1/open-folder", headers=tunnel).status_code == 403
+        r = c.patch("/api/applications/1/status", json={"status": "sent"},
+                    headers={**tunnel, "origin": "https://evil.example"})
+        assert r.status_code == 403
+
+
+def test_web_refuses_to_expose_the_default_admin_password(ws, monkeypatch):
+    import web  # noqa: PLC0415
+    monkeypatch.delenv("CVT_ADMIN_PASSWORD")
+    with pytest.raises(SystemExit) as e:
+        web.main(["--workspace", str(ws), "--public", "--no-open"])
+    assert "DEFAULT_ADMIN" in str(e.value)
+
+
+def test_admin_password_can_come_from_the_workspace_env_file(ws, monkeypatch):
+    from webapp import auth  # noqa: PLC0415
+    monkeypatch.delenv("CVT_ADMIN_USER")
+    monkeypatch.delenv("CVT_ADMIN_PASSWORD")
+    assert auth.admin_credentials() == ("admin", "admin", True)
+    (ws / ".cv-tailor" / "web").mkdir(parents=True, exist_ok=True)
+    (ws / ".cv-tailor" / "web" / ".env").write_text("CVT_ADMIN_USER=Admin\nCVT_ADMIN_PASSWORD='from file'\n",
+                                                   encoding="utf-8")
+    auth.load_env(ws)
+    assert auth.admin_credentials() == ("admin", "from file", False)
 
 
 def test_allow_list(ws):

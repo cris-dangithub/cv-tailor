@@ -85,8 +85,17 @@ Lo mismo desde el navegador, o desde el móvil, en lugar de una ventana de chat:
 ```bash
 python skills/cv-tailor/cvt.py setup-env --web    # una vez
 python skills/cv-tailor/cvt.py web                # dentro de tu espacio de trabajo: http://127.0.0.1:8765
-python skills/cv-tailor/cvt.py web --lan          # también el móvil en la misma Wi-Fi (enlace + QR con token)
+python skills/cv-tailor/cvt.py web --lan          # también el móvil en la misma Wi-Fi (dirección + QR)
+python skills/cv-tailor/cvt.py web --public       # desde cualquier sitio, detrás de un túnel como `ngrok http 8765`
 ```
+
+**Cuentas.** Todo el mundo inicia sesión, y la sesión dura hasta que se cierra.
+
+- El superusuario se define con `CVT_ADMIN_USER` y `CVT_ADMIN_PASSWORD`, como variables de
+  entorno o en `<workspace>/.cv-tailor/web/.env`.
+- Si no se definen, es `admin` / `admin`, y entonces `--lan` / `--public` no arrancan.
+- Cualquiera puede crear una cuenta. La primera queda activa al momento; las siguientes
+  esperan a que el superusuario las apruebe en la pantalla Usuarios.
 
 - **Escritorio**: pega una o varias ofertas o enlaces. Cada una tiene su propia sesión del
   agente, y hasta N trabajan en paralelo.

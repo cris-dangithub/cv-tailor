@@ -19,9 +19,18 @@
   - the model is configurable and defaults to `claude-opus-5-5`;
   - effort is high or medium per message;
   - a small auto-compaction window (100k by default) keeps long chats cheap.
-- `cvt web --lan` opens it to other devices on the network. They need a one-time link with an
-  access token, also shown as a QR. Host and Origin are checked on every request, and by
-  default the app listens on 127.0.0.1 only.
+- **Sign-in and accounts.**
+  - Every visitor signs in, on this computer too, and the session lasts until they sign out.
+  - The superuser comes from `CVT_ADMIN_USER` / `CVT_ADMIN_PASSWORD` (environment or
+    `.cv-tailor/web/.env`) and approves, disables, resets or deletes accounts.
+  - Anyone can create an account: the first is active at once, later ones wait for approval.
+  - Passwords are hashed with scrypt, only hashes of session tokens are stored, and repeated
+    wrong passwords are slowed down.
+- `cvt web --lan` opens the app to the local network. `cvt web --public` accepts any host name,
+  for a tunnel such as ngrok.
+  - Both refuse to start while the superuser still has the default password.
+  - The Origin header is checked on every change.
+  - Requests that come through a proxy never count as "this computer".
 - Optional dependencies (`requirements-web.txt`) install with `cvt setup-env --web`. The UI ships
   prebuilt in `web/ui/dist`. `cvt doctor` reports the web app and whether the Claude Code CLI
   is present.

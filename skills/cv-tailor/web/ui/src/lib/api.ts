@@ -1,36 +1,45 @@
 import type {
   AppDetail,
   AppRow,
+  Me,
   PdfRow,
   Settings,
   Status,
   Styles,
   Thread,
   ThreadDetail,
+  UserRow,
   Workspace,
 } from "./types";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public retryAfter = 0) {
     super(message);
   }
 }
+
+/** Fired when a request finds the session gone (signed out elsewhere, disabled by the admin). */
+export const UNAUTHORIZED = "cvt:unauthorized";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const isForm = init?.body instanceof FormData;
   const r = await fetch(path, {
     ...init,
+    credentials: "same-origin",
     headers: isForm ? init?.headers : { "content-type": "application/json", ...init?.headers },
   });
   if (!r.ok) {
     let msg = r.statusText;
+    let retry = 0;
     try {
       const body = await r.json();
       msg = body.error || body.detail || msg;
+      retry = body.retry_after || 0;
     } catch {
       /* not json */
     }
-    throw new ApiError(r.status, typeof msg === "string" ? msg : JSON.stringify(msg));
+    if (r.status === 401 && !path.startsWith("/api/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED));
+    throw new ApiError(r.status, typeof msg === "string" ? msg : JSON.stringify(msg), retry);
   }
   return r.json() as Promise<T>;
 }
@@ -41,6 +50,19 @@ export const fileUrl = (appId: string, name: string, download = false) =>
   `/api/applications/${encodeURIComponent(appId)}/files/${encodeURIComponent(name)}${download ? "?download=1" : ""}`;
 
 export const api = {
+  me: () => req<Me>("/api/auth/me"),
+  login: (username: string, password: string) => req<Me>("/api/auth/login", json("POST", { username, password })),
+  register: (username: string, password: string) =>
+    req<Me | { status: "pending" }>("/api/auth/register", json("POST", { username, password })),
+  logout: () => req<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
+
+  users: () => req<UserRow[]>("/api/users"),
+  userAction: (name: string, action: "approve" | "reject" | "disable" | "enable" | "logout-all") =>
+    req<UserRow[]>(`/api/users/${encodeURIComponent(name)}/${action}`, { method: "POST" }),
+  userPassword: (name: string, password: string) =>
+    req<UserRow[]>(`/api/users/${encodeURIComponent(name)}/password`, json("POST", { password })),
+  deleteUser: (name: string) => req<UserRow[]>(`/api/users/${encodeURIComponent(name)}`, { method: "DELETE" }),
+
   workspace: () => req<Workspace>("/api/workspace"),
   health: () => req<{ cli: string | null; logged_in: boolean | null }>("/api/health"),
   settings: () => req<Settings>("/api/settings"),

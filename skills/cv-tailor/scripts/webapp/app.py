@@ -1,15 +1,15 @@
 """HTTP layer of the web app: JSON API under /api, the built React UI everywhere else.
 
-Security model: by default the server listens on 127.0.0.1 only. With --lan it also accepts
-other devices of the local network, which must present the access token once (the link or QR
-printed at start); the token then lives in an HttpOnly cookie. Host and Origin are checked on
-every request so a web page elsewhere cannot drive the agent (DNS rebinding, CSRF).
+Security model: every /api route needs a signed-in user (auth.py), on this computer too: a
+tunnel such as ngrok delivers outside visitors as 127.0.0.1. The server listens on 127.0.0.1 by
+default; --lan adds the machine's network addresses, --public accepts any host name (for a
+tunnel). Outside --public the Host header must be a known one (DNS rebinding); a state-changing
+request must come from a page of this same host (Origin, CSRF).
 """
 from __future__ import annotations
 
 import asyncio
 import contextlib
-import hmac
 import io
 import ipaddress
 import os
@@ -27,11 +27,15 @@ from pydantic import BaseModel
 import workspace as workspace_cli
 from common import SKILL_DIR, now
 from webapp import library, prompts, settings
+from webapp.auth import Auth, AuthError, admin_credentials
 from webapp.events import Bus
 from webapp.threads import Store
 
 UI_DIST = SKILL_DIR / "web" / "ui" / "dist"
-COOKIE = "cvt_token"
+COOKIE = "cvt_session"
+TEN_YEARS = 3600 * 24 * 365 * 10  # a session ends when its user signs out, not by itself
+OPEN_API = {"/api/auth/login", "/api/auth/register", "/api/auth/me", "/api/auth/logout", "/api/health"}
+FORWARDED = ("x-forwarded-for", "forwarded", "x-forwarded-host", "x-real-ip")
 SAMPLE_TYPES = (".pdf", ".docx", ".doc", ".odt", ".html", ".png", ".jpg", ".jpeg")
 
 
@@ -81,13 +85,39 @@ class ZipBody(BaseModel):
     files: list[dict]
 
 
+class Credentials(BaseModel):
+    username: str
+    password: str
+
+
+class PasswordBody(BaseModel):
+    password: str
+
+
 # --------------------------------------------------------------------------- helpers
 def is_local(request: Request) -> bool:
+    """This computer, not a visitor that a proxy or tunnel hands over as 127.0.0.1."""
+    if any(h in request.headers for h in FORWARDED):
+        return False
     host = request.client.host if request.client else ""
     try:
         return ipaddress.ip_address(host).is_loopback
     except ValueError:
         return host in ("testclient", "localhost")
+
+
+def client_address(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "")
+
+
+def is_https(request: Request) -> bool:
+    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
+
+
+def _bare(host: str) -> str:
+    host = (host or "").lower()
+    return host[: host.rindex(":")] if re.search(r":\d+$", host) else host
 
 
 def allowed_hosts(lan_hosts: list[str]) -> set[str]:
@@ -104,7 +134,7 @@ def open_folder(path: pathlib.Path) -> None:
 
 
 def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None = None,
-               port: int = 8765, runner=None) -> FastAPI:
+               port: int = 8765, runner=None, public: bool = False) -> FastAPI:
     ws = pathlib.Path(ws).resolve()
     store = Store(ws)
     bus = Bus()
@@ -112,7 +142,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         from webapp.runner import Runner  # noqa: PLC0415  (needs claude-agent-sdk)
         runner = Runner(ws, store, bus)
     hosts = allowed_hosts(lan_hosts or [])
-    token = settings.token(ws)
+    auth = Auth(ws)
 
     @contextlib.asynccontextmanager
     async def lifespan(_app):
@@ -127,6 +157,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
     app = FastAPI(title="cv-tailor", docs_url=None, redoc_url=None, openapi_url=None,
                   lifespan=lifespan)
     app.state.ws, app.state.store, app.state.bus, app.state.runner = ws, store, bus, runner
+    app.state.auth = auth
 
     async def watch_index():
         """Agents in the desktop app or a terminal change the workspace too: tell the browser."""
@@ -145,28 +176,43 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
     # ----------------------------------------------------------------------- guard
     @app.middleware("http")
     async def guard(request: Request, call_next):
-        host = (request.headers.get("host") or "").lower()
-        host = host[: host.rindex(":")] if re.search(r":\d+$", host) else host
-        if host and host not in hosts:
+        host = request.headers.get("host") or ""
+        if not public and host and _bare(host) not in hosts:
             return Response("unknown host", status_code=421)
         origin = request.headers.get("origin")
         if origin and request.method not in ("GET", "HEAD"):
-            o = re.sub(r"^https?://", "", origin).lower()
-            o = o[: o.rindex(":")] if re.search(r":\d+$", o) else o
-            if o not in hosts:
+            seen = {host.lower(), (request.headers.get("x-forwarded-host") or "").lower()} - {""}
+            if re.sub(r"^https?://", "", origin).lower().rstrip("/") not in seen:
                 return Response("cross-origin request refused", status_code=403)
-        if not is_local(request):
-            if not lan:
-                return Response("local only", status_code=403)
-            given = request.query_params.get("t")
-            if given and hmac.compare_digest(given, token):
-                resp = Response(status_code=303, headers={"location": request.url.path})
-                resp.set_cookie(COOKIE, token, httponly=True, samesite="strict",
-                                max_age=3600 * 24 * 365)
-                return resp
-            if not hmac.compare_digest(request.cookies.get(COOKIE, ""), token):
-                return Response("Open the link printed by `cvt web --lan` first.", status_code=401)
+        request.state.user = auth.user_for(request.cookies.get(COOKIE))
+        path = request.url.path
+        if path.startswith("/api/") and path not in OPEN_API:
+            if not request.state.user:
+                return JSONResponse({"error": "auth_required"}, status_code=401)
+            if path.startswith("/api/users") and not request.state.user["is_admin"]:
+                return JSONResponse({"error": "forbidden"}, status_code=403)
         return await call_next(request)
+
+    def who(request: Request) -> str:
+        return (request.state.user or {}).get("user", "")
+
+    def me_payload(user: dict) -> dict:
+        is_admin = user["is_admin"]
+        return {"user": user["user"], "is_admin": is_admin,
+                "default_admin_password": is_admin and admin_credentials()[2],
+                "pending_users": auth.pending_count() if is_admin else 0}
+
+    def signed_in(request: Request, token: str) -> JSONResponse:
+        resp = JSONResponse(me_payload(auth.user_for(token)))
+        resp.set_cookie(COOKIE, token, max_age=TEN_YEARS, httponly=True, samesite="lax",
+                        secure=is_https(request), path="/")
+        return resp
+
+    @app.exception_handler(AuthError)
+    async def auth_error(_, exc: AuthError):
+        headers = {"retry-after": str(exc.retry_after)} if exc.retry_after else None
+        return JSONResponse({"error": exc.code, "retry_after": exc.retry_after},
+                            status_code=exc.status, headers=headers)
 
     @app.exception_handler(library.NotFound)
     async def not_found(_, exc):
@@ -180,13 +226,87 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
     async def no_thread(_, exc):
         return JSONResponse({"error": f"not found: {exc}"}, status_code=404)
 
+    # ----------------------------------------------------------------------- sign in
+    @app.post("/api/auth/register")
+    def register(body: Credentials, request: Request):
+        status = auth.register(body.username, body.password)
+        if status == "pending":
+            bus.emit("users")
+            return {"status": "pending"}
+        token = auth.login(body.username, body.password, client_address(request),
+                           request.headers.get("user-agent", ""))
+        return signed_in(request, token)
+
+    @app.post("/api/auth/login")
+    def login(body: Credentials, request: Request):
+        token = auth.login(body.username, body.password, client_address(request),
+                           request.headers.get("user-agent", ""))
+        return signed_in(request, token)
+
+    @app.post("/api/auth/logout")
+    def logout(request: Request):
+        auth.logout(request.cookies.get(COOKIE))
+        resp = JSONResponse({"ok": True})
+        resp.delete_cookie(COOKIE, path="/")
+        return resp
+
+    @app.get("/api/auth/me")
+    def me(request: Request):
+        if not request.state.user:
+            return JSONResponse({"error": "auth_required"}, status_code=401)
+        return me_payload(request.state.user)
+
+    # ----------------------------------------------------------------------- users (superuser)
+    def changed():
+        bus.emit("users")
+        return auth.list()
+
+    @app.get("/api/users")
+    def list_users():
+        return auth.list()
+
+    @app.post("/api/users/{name}/approve")
+    def approve_user(name: str, request: Request):
+        auth.approve(name, by=who(request))
+        return changed()
+
+    @app.post("/api/users/{name}/reject")
+    def reject_user(name: str):
+        auth.reject(name)
+        return changed()
+
+    @app.post("/api/users/{name}/disable")
+    def disable_user(name: str):
+        auth.set_status(name, "disabled")
+        return changed()
+
+    @app.post("/api/users/{name}/enable")
+    def enable_user(name: str):
+        auth.set_status(name, "active")
+        return changed()
+
+    @app.post("/api/users/{name}/password")
+    def password_user(name: str, body: PasswordBody):
+        auth.set_password(name, body.password)
+        return changed()
+
+    @app.post("/api/users/{name}/logout-all")
+    def logout_user(name: str):
+        auth.revoke_user(name)
+        return changed()
+
+    @app.delete("/api/users/{name}")
+    def delete_user(name: str):
+        auth.delete(name)
+        return changed()
+
     # ----------------------------------------------------------------------- workspace
     @app.get("/api/workspace")
     def get_workspace(request: Request):
         info = library.workspace_info(ws)
         info["local"] = is_local(request)
-        info["lan"] = {"enabled": lan,
-                       "urls": [f"http://{h}:{port}/?t={token}" for h in (lan_hosts or [])]
+        info["public"] = public
+        info["lan"] = {"enabled": lan, "urls": [f"http://{h}:{port}/" for h in (lan_hosts or [])]
                        } if is_local(request) else None
         return info
 
@@ -200,7 +320,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
             raise HTTPException(404)
         import qrcode  # noqa: PLC0415
         import qrcode.image.svg  # noqa: PLC0415
-        img = qrcode.make(f"http://{lan_hosts[0]}:{port}/?t={token}",
+        img = qrcode.make(f"http://{lan_hosts[0]}:{port}/",
                           image_factory=qrcode.image.svg.SvgPathImage, border=1)
         return Response(img.to_string(), media_type="image/svg+xml")
 
@@ -226,8 +346,8 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return out
 
     @app.patch("/api/applications/{app_id}/status")
-    def patch_status(app_id: str, body: StatusBody):
-        out = library.set_status(ws, app_id, body.status, body.note)
+    def patch_status(app_id: str, body: StatusBody, request: Request):
+        out = library.set_status(ws, app_id, body.status, body.note or f"web · {who(request)}")
         bus.emit("apps")
         return out
 
@@ -245,14 +365,14 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return {"ok": True}
 
     @app.post("/api/applications/{app_id}/feedback")
-    async def post_feedback(app_id: str, body: FeedbackBody):
+    async def post_feedback(app_id: str, body: FeedbackBody, request: Request):
         meta = library.application(ws, app_id)
         threads = store.for_app(app_id)
         t = threads[0] if threads else store.create(
             "feedback", f"{meta.get('company', '')} · {meta.get('role', '')}", app_id=meta["id"],
             effort=body.effort or settings.load(ws)["effort"])
         await runner.send(t["id"], prompts.feedback(meta, body.text), effort=body.effort,
-                          shown=body.text)
+                          shown=body.text, author=who(request))
         return store.get(t["id"])
 
     # ----------------------------------------------------------------------- pdfs
@@ -273,7 +393,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
 
     # ----------------------------------------------------------------------- offers & threads
     @app.post("/api/offers")
-    async def post_offers(body: OffersBody):
+    async def post_offers(body: OffersBody, request: Request):
         created = []
         for item in body.items:
             text, url = item.text.strip(), item.url.strip()
@@ -282,7 +402,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
             t = store.create("offer", prompts.offer_title(text, url),
                              effort=body.effort or settings.load(ws)["effort"])
             await runner.send(t["id"], prompts.offer(text, url), effort=body.effort,
-                              shown=url or text)
+                              shown=url or text, author=who(request))
             created.append(store.get(t["id"]))
         if not created:
             raise ValueError("paste an offer or a link")
@@ -293,10 +413,10 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return store.all()
 
     @app.post("/api/threads")
-    async def new_thread(body: ThreadBody):
+    async def new_thread(body: ThreadBody, request: Request):
         t = store.create("chat", body.title or prompts.chat_title(body.text), app_id=body.app_id,
                          effort=body.effort or settings.load(ws)["effort"])
-        await runner.send(t["id"], body.text, effort=body.effort)
+        await runner.send(t["id"], body.text, effort=body.effort, author=who(request))
         return store.get(t["id"])
 
     @app.get("/api/threads/{tid}")
@@ -307,9 +427,9 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return {**t, "messages": store.messages(tid), "pending": runner.pending_for(tid)}
 
     @app.post("/api/threads/{tid}/messages")
-    async def post_message(tid: str, body: MessageBody):
+    async def post_message(tid: str, body: MessageBody, request: Request):
         store.get(tid)
-        await runner.send(tid, body.text, effort=body.effort)
+        await runner.send(tid, body.text, effort=body.effort, author=who(request))
         return store.get(tid)
 
     @app.post("/api/threads/{tid}/stop")
@@ -325,8 +445,8 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return {"ok": True}
 
     @app.post("/api/permissions/{req_id}")
-    def answer_permission(req_id: str, body: PermissionBody):
-        if not runner.answer(req_id, body.allow, body.remember):
+    def answer_permission(req_id: str, body: PermissionBody, request: Request):
+        if not runner.answer(req_id, body.allow, body.remember, by=who(request)):
             raise HTTPException(404, "that request is no longer waiting")
         return {"ok": True}
 
@@ -344,7 +464,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         return library.styles(ws)
 
     @app.post("/api/styles/sample")
-    async def post_style_sample(file: UploadFile = File(...), name: str = Form(""),
+    async def post_style_sample(request: Request, file: UploadFile = File(...), name: str = Form(""),
                                 effort: str | None = Form(None)):
         safe = re.sub(r"[^A-Za-z0-9._-]+", "_", pathlib.Path(file.filename or "sample").name)[-80:]
         if pathlib.Path(safe).suffix.lower() not in SAMPLE_TYPES:
@@ -353,7 +473,8 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(await file.read())
         t = store.create("style", name or safe, effort=effort or settings.load(ws)["effort"])
-        await runner.send(t["id"], prompts.style(dest, name), effort=effort, shown=safe)
+        await runner.send(t["id"], prompts.style(dest, name), effort=effort, shown=safe,
+                          author=who(request))
         return store.get(t["id"])
 
     # ----------------------------------------------------------------------- live updates
