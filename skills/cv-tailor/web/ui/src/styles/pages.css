@@ -946,6 +946,17 @@
   font-size: 0.875rem;
   overflow: hidden;
 }
+.field-note {
+  display: block;
+  overflow: hidden;
+  line-height: 1.45;
+}
+.field-note.error {
+  color: var(--danger);
+}
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
 .login-message.error {
   color: var(--danger);
 }

@@ -192,11 +192,15 @@ def test_first_account_is_free_later_ones_wait_for_approval(ws):
         assert second.post("/api/auth/register", json={"username": "boss", "password": "whatever-1"}).status_code == 409
         assert second.post("/api/auth/register", json={"username": "x", "password": "password-x"}).status_code == 400
         assert second.post("/api/auth/register", json={"username": "carla", "password": "short"}).status_code == 400
+        assert second.post("/api/auth/register", json={"username": "Ana Lopez", "password": "password-x"}).json()["error"] == "invalid_username"
+        r = second.post("/api/auth/register", json={"username": "Widi@Example.com", "password": "fictional-pass-1"})
+        assert r.json() == {"status": "pending"}  # an email is a fine user name
 
         login(boss, **ADMIN)
-        assert boss.get("/api/auth/me").json()["pending_users"] == 1
+        assert boss.get("/api/auth/me").json()["pending_users"] == 2
         users = boss.get("/api/users").json()
-        assert [(u["username"], u["status"]) for u in users] == [("bruno", "pending"), ("ana", "active")]
+        assert [(u["username"], u["status"]) for u in users] == [
+            ("bruno", "pending"), ("widi@example.com", "pending"), ("ana", "active")]
         boss.post("/api/users/bruno/approve")
         assert login(second, "bruno", "password-bruno").status_code == 200
         assert next(u for u in boss.get("/api/users").json() if u["username"] == "bruno")["approved_by"] == "boss"

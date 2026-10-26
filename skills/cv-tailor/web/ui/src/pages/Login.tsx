@@ -39,6 +39,9 @@ export function Login() {
         return known !== key ? known.replace("{s}", String(err.retryAfter || 60)) : t("auth.err.generic", { msg: err.message });
       })()
     : null;
+  // say which field is wrong, right under it; anything else goes below the form
+  const field = err ? (["invalid_username", "username_taken"].includes(err.message) ? "username"
+    : err.message === "weak_password" ? "password" : "form") : null;
 
   return (
     <div className="login">
@@ -103,8 +106,10 @@ export function Login() {
               autoCapitalize="none"
               spellCheck={false}
               autoFocus
+              aria-invalid={field === "username"}
               onChange={(e) => setUsername(e.target.value)}
             />
+            <FieldNote error={field === "username" ? errorText : null} hint={mode === "register" ? t("auth.usernameHint") : null} />
           </label>
           <label className="field">
             <span className="label">{t("auth.password")}</span>
@@ -113,20 +118,22 @@ export function Login() {
               type="password"
               value={password}
               autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+              aria-invalid={field === "password"}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <FieldNote error={field === "password" ? errorText : null} />
           </label>
           <AnimatePresence>
-            {(errorText || notice) && (
+            {((field === "form" && errorText) || notice) && (
               <motion.p
-                key={errorText || notice}
-                className={cx("login-message", errorText ? "error" : "ok")}
-                role={errorText ? "alert" : "status"}
+                key={(field === "form" && errorText) || notice}
+                className={cx("login-message", field === "form" ? "error" : "ok")}
+                role={field === "form" ? "alert" : "status"}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                {errorText || notice}
+                {(field === "form" && errorText) || notice}
               </motion.p>
             )}
           </AnimatePresence>
@@ -137,5 +144,25 @@ export function Login() {
         </form>
       </motion.section>
     </div>
+  );
+}
+
+function FieldNote({ error, hint }: { error: string | null; hint?: string | null }) {
+  const text = error || hint;
+  return (
+    <AnimatePresence initial={false}>
+      {text && (
+        <motion.span
+          key={text}
+          className={cx("field-note small", error ? "error" : "muted")}
+          role={error ? "alert" : undefined}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+        >
+          {text}
+        </motion.span>
+      )}
+    </AnimatePresence>
   );
 }

@@ -26,7 +26,7 @@ from webapp.settings import web_dir
 
 ENV_USER, ENV_PASSWORD = "CVT_ADMIN_USER", "CVT_ADMIN_PASSWORD"
 DEFAULT_ADMIN = ("admin", "admin")
-USERNAME_RE = re.compile(r"^[a-z0-9._-]{3,32}$")
+USERNAME_RE = re.compile(r"^[a-z0-9._@+-]{3,64}$")  # a plain name or an email address
 MIN_PASSWORD = 8
 MAX_FAILURES = 5  # per address and user name, then an increasing wait
 SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1, "dklen": 32}
