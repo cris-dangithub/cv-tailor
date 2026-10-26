@@ -5,7 +5,8 @@ Check that everything the skill needs is in place. Standard library only.
     doctor.py [--json]
 
 Essential: Python 3.9+, the skill venv (setup-env), a Chromium-family browser (or Playwright).
-Optional: gh (GitHub pool sources), LibreOffice (DOCX reference CVs for new styles).
+Optional: gh (GitHub pool sources), LibreOffice (DOCX reference CVs for new styles), the web app
+(`cvt web`: its Python packages and the Claude Code CLI).
 Exit 0 when the essentials are ready.
 """
 from __future__ import annotations
@@ -19,7 +20,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build import find_browser  # noqa: E402  (stdlib-only at import time)
 from common import SKILL_DIR, find_workspace, load_config  # noqa: E402
-from setup_env import ready  # noqa: E402
+from setup_env import REQUIRED, WEB_REQUIRED, ready  # noqa: E402
 
 
 def soffice() -> str | None:
@@ -62,6 +63,13 @@ def main():
     row("gh (GitHub CLI)", bool(gh), detail, False)
     so = soffice()
     row("LibreOffice", bool(so), so or "not installed (only to read DOCX reference CVs for new styles)", False)
+    web_ok, web_why = ready(REQUIRED + WEB_REQUIRED)
+    built = (SKILL_DIR / "web" / "ui" / "dist" / "index.html").is_file()
+    row("web app (cvt web)", web_ok and built,
+        "ready" if web_ok and built else ("UI not built (web/ui: npm ci && npm run build)" if web_ok else
+                                          f"{web_why} -> run: python \"{SKILL_DIR / 'cvt.py'}\" setup-env --web"), False)
+    claude = shutil.which("claude")
+    row("Claude Code CLI", bool(claude), claude or "not on PATH (the web app then uses the SDK's bundled CLI)", False)
 
     ws = find_workspace()
     if ws:

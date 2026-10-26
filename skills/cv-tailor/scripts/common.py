@@ -5,12 +5,15 @@ in a *workspace*: a folder that contains `.cv-tailor/config.yaml`.
 """
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import json
 import os
 import pathlib
 import re
 import sys
+import threading
+import time
 import unicodedata
 
 SKILL_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -115,6 +118,67 @@ def save_config(ws: pathlib.Path, cfg: dict) -> None:
 
 def apps_dir(ws: pathlib.Path) -> pathlib.Path:
     return ws / APPS_DIR
+
+
+# --------------------------------------------------------------------------- locking
+_lock_guard = threading.RLock()
+_lock_depth: dict[str, int] = {}
+
+
+@contextlib.contextmanager
+def workspace_lock(ws: pathlib.Path, timeout: float = 60.0):
+    """Serialise application writes across processes: several agent sessions and the web app
+    can work on one workspace at once, and two of them must never take the same id.
+
+    Re-entrant within a process (save_meta runs inside cmd_new's lock).
+    """
+    key = str(pathlib.Path(ws).resolve())
+    with _lock_guard:
+        if _lock_depth.get(key):
+            _lock_depth[key] += 1
+            try:
+                yield
+            finally:
+                _lock_depth[key] -= 1
+            return
+        path = pathlib.Path(ws) / WS_MARKER / "index.lock"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a+b") as fh:
+            _lock_file(fh, timeout)
+            _lock_depth[key] = 1
+            try:
+                yield
+            finally:
+                _lock_depth.pop(key, None)
+                _unlock_file(fh)
+
+
+def _lock_file(fh, timeout: float) -> None:
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            if os.name == "nt":
+                import msvcrt  # noqa: PLC0415
+                fh.seek(0)
+                msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl  # noqa: PLC0415
+                fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except OSError:
+            if time.monotonic() > deadline:
+                sys.exit("LOCKED: another cv-tailor process kept the workspace locked too long.")
+            time.sleep(0.05)
+
+
+def _unlock_file(fh) -> None:
+    if os.name == "nt":
+        import msvcrt  # noqa: PLC0415
+        fh.seek(0)
+        msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl  # noqa: PLC0415
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
 # --------------------------------------------------------------------------- styles

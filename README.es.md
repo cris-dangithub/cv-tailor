@@ -78,6 +78,35 @@ Abre tu agente en una carpeta vacía: esa carpeta será tu **espacio de trabajo*
 
 Desde ahí, en esa carpeta, basta con pegar una oferta.
 
+## App web
+
+Lo mismo desde el navegador, o desde el móvil, en lugar de una ventana de chat:
+
+```bash
+python skills/cv-tailor/cvt.py setup-env --web    # una vez
+python skills/cv-tailor/cvt.py web                # dentro de tu espacio de trabajo: http://127.0.0.1:8765
+python skills/cv-tailor/cvt.py web --lan          # también el móvil en la misma Wi-Fi (enlace + QR con token)
+```
+
+- **Escritorio**: pega una o varias ofertas o enlaces. Cada una tiene su propia sesión del
+  agente, y hasta N trabajan en paralelo.
+- **Aplicaciones**: índice y tablero por estado, búsqueda y cambios de estado con nota.
+- **Aplicación**: el recorrido de estados, el CV por idioma y versión, el informe, la oferta y
+  el feedback, que continúa la misma sesión.
+- **Documentos**: todos los PDF. Puedes verlos, descargarlos o bajar una selección en ZIP.
+- **Conversaciones**: las respuestas llegan en vivo, los pasos con herramientas se pliegan, las
+  preguntas del agente se responden ahí mismo, y lo que está fuera de la lista blanca espera a
+  que lo apruebes en una tarjeta.
+- **Estilos y ajustes**: cambia de estilo o crea uno a partir de un CV de muestra. Elige el
+  modelo (Opus 5.5 por defecto), el esfuerzo (alto o medio, también por mensaje), la ventana de
+  compactación (pequeña por defecto, para que los chats salgan baratos), la concurrencia y el
+  idioma (inglés, español o indonesio).
+
+Usa **Claude Code** directamente, con tu propia sesión y sin API key, así que `claude` tiene que
+estar instalado y con sesión iniciada (`claude auth login`; la sesión de la app de escritorio no
+sirve para la CLI). La interfaz viene ya compilada: Node solo hace falta para modificarla.
+Detalles: `skills/cv-tailor/references/web.md`.
+
 ## Tus datos
 
 - **El pool es tuyo y se queda donde está.** La skill solo guarda su ubicación y nunca escribe en él;
@@ -93,6 +122,11 @@ Desde ahí, en esa carpeta, basta con pegar una oferta.
 python skills/cv-tailor/cvt.py setup-env --dev
 skills/cv-tailor/.venv/Scripts/python -m pytest tests      # bin/python en macOS/Linux
 ```
+
+Interfaz web (requiere Node 20+): con `cvt web` corriendo en un espacio de trabajo,
+`npm --prefix skills/cv-tailor/web/ui run dev` sirve la interfaz con recarga en caliente en :5173
+y redirige `/api` al servidor. Haz commit del resultado de `npm --prefix skills/cv-tailor/web/ui
+run build` (`web/ui/dist`), que es lo que reciben los usuarios.
 
 ## Licencia
 

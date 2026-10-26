@@ -1,0 +1,8 @@
+# Optional web app (`cvt web`), on top of requirements.txt:
+#     python cvt.py setup-env --web
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+claude-agent-sdk>=0.2.170
+qrcode>=7.4
+httpx>=0.27

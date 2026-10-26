@@ -103,7 +103,7 @@ def cmd_init(a):
     }
     (root / WS_MARKER).mkdir(exist_ok=True)
     save_config(root, cfg)
-    (root / WS_MARKER / ".gitignore").write_text("style-cache/\ncache/\n", encoding="utf-8")
+    (root / WS_MARKER / ".gitignore").write_text("style-cache/\ncache/\nweb/\n", encoding="utf-8")
     for d in ("applications", "learnings", "profile/samples", "styles"):
         (root / d).mkdir(parents=True, exist_ok=True)
     seeds = {

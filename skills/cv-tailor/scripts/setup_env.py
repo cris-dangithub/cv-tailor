@@ -6,6 +6,7 @@ Standard library only: this runs before any dependency exists.
 
     setup_env.py            # install (or repair) the environment
     setup_env.py --dev      # also install the test tools
+    setup_env.py --web      # also install the optional web app (`cvt web`)
     setup_env.py --check    # only report: exit 0 if ready, 3 if not
 
 Dependencies come from requirements.txt (and requirements-dev.txt with --dev); this is the
@@ -13,6 +14,7 @@ same as running, inside the skill folder:
 
     pipenv install -r requirements.txt
     pipenv install --dev -r requirements-dev.txt
+    pipenv install -r requirements-web.txt
 
 The Pipfile / Pipfile.lock that pipenv generates are local and ignored by git.
 The venv lives inside the skill folder (PIPENV_VENV_IN_PROJECT=1, also set in <skill>/.env)
@@ -30,6 +32,7 @@ import sys
 SKILL_DIR = pathlib.Path(__file__).resolve().parent.parent
 VENV = SKILL_DIR / ".venv"
 REQUIRED = ["yaml", "jinja2", "pypdf", "pdfplumber", "pypdfium2"]
+WEB_REQUIRED = ["fastapi", "uvicorn", "multipart", "claude_agent_sdk", "qrcode"]
 
 
 def venv_python() -> pathlib.Path:
@@ -37,11 +40,11 @@ def venv_python() -> pathlib.Path:
     return win if win.exists() or os.name == "nt" else VENV / "bin" / "python"
 
 
-def ready() -> tuple[bool, str]:
+def ready(modules=REQUIRED) -> tuple[bool, str]:
     py = venv_python()
     if not py.exists():
         return False, f"no venv at {VENV}"
-    code = "import importlib.util,sys;m=[x for x in %r if not importlib.util.find_spec(x)];print(','.join(m));sys.exit(1 if m else 0)" % REQUIRED
+    code = "import importlib.util,sys;m=[x for x in %r if not importlib.util.find_spec(x)];print(','.join(m));sys.exit(1 if m else 0)" % modules
     r = subprocess.run([str(py), "-c", code], capture_output=True, text=True)
     return (r.returncode == 0, "ok" if r.returncode == 0 else f"missing: {r.stdout.strip()}")
 
@@ -56,10 +59,11 @@ def run(cmd, env=None):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dev", action="store_true")
+    ap.add_argument("--web", action="store_true")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
 
-    ok, why = ready()
+    ok, why = ready(REQUIRED + WEB_REQUIRED if a.web else REQUIRED)
     if a.check:
         print(("ENV_READY " if ok else "ENV_MISSING ") + why)
         sys.exit(0 if ok else 3)
@@ -76,7 +80,9 @@ def main():
     run([py, "-m", "pipenv", "install", "--python", py, "-r", "requirements.txt"], env)
     if a.dev:
         run([py, "-m", "pipenv", "install", "--dev", "-r", "requirements-dev.txt"], env)
-    ok, why = ready()
+    if a.web:
+        run([py, "-m", "pipenv", "install", "-r", "requirements-web.txt"], env)
+    ok, why = ready(REQUIRED + WEB_REQUIRED if a.web else REQUIRED)
     print(("ENV_READY " if ok else "ENV_MISSING ") + why + f"  ({venv_python()})")
     sys.exit(0 if ok else 3)
 

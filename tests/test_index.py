@@ -86,3 +86,18 @@ def test_add_file_relative(ws):
     shutil.copy(EXAMPLES / "sample-cv.en.yml", d / "cv.en.yml")
     index.main(["--workspace", str(ws), "add-file", "1", "--lang", "en", "--kind", "yaml", "--path", "cv.en.yml"])
     assert read_json(d / "meta.json")["files"]["en"]["yaml"] == "cv.en.yml"
+
+
+def test_parallel_sessions_never_share_an_id(ws):
+    import subprocess  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+    from conftest import SKILL  # noqa: PLC0415
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import index\n"
+            "for i in range(4): index.main(['--workspace', sys.argv[2], 'new', '--company', sys.argv[3] + str(i), "
+            "'--role', 'Engineer'])")
+    procs = [subprocess.Popen([sys.executable, "-c", code, str(SKILL / "scripts"), str(ws), name],
+                              stdout=subprocess.DEVNULL) for name in ("Acme", "Globex", "Initech")]
+    assert all(p.wait(timeout=120) == 0 for p in procs)
+    ids = [d.name.split("-")[0] for d in index.app_dirs(ws)]
+    assert len(ids) == 12 and len(set(ids)) == 12
+    assert len((ws / "applications" / "index.jsonl").read_text(encoding="utf-8").splitlines()) == 12

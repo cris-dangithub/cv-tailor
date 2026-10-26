@@ -5,7 +5,7 @@ cv-tailor command launcher. Runs any script of the skill with the skill's own ve
     python <skill>/cvt.py <command> [args...]
 
 Commands:
-    setup-env [--dev]   create/repair <skill>/.venv with pipenv (run this first)
+    setup-env [--dev] [--web]  create/repair <skill>/.venv with pipenv (run this first)
     doctor              check environment, browser and optional tools
     workspace ...       init / show / set / scan-pool / styles ...      (scripts/workspace.py)
     index ...           new / list / show / update / status / search ... (scripts/index.py)
@@ -19,6 +19,7 @@ Commands:
     style ...           measure a reference CV / scaffold a new style    (scripts/extract_style.py)
     report ID|--all     refresh the candidate-facing report.md           (scripts/report.py)
     pool-writeback ...  snapshot / finish / diff / rollback pool updates (scripts/pool_writeback.py)
+    web [--lan]         the browser app: offers, chat, applications, PDFs (scripts/web.py)
 
 Standard library only, so it works before the venv exists. Exit code 3 = environment missing.
 """
@@ -34,7 +35,7 @@ COMMANDS = {
     "sync-md": "sync_md.py", "voice": "voice.py", "extract": "extract_text.py",
     "fetch-offer": "fetch_offer.py", "github": "pool_github.py", "style": "extract_style.py",
     "doctor": "doctor.py", "setup-env": "setup_env.py", "report": "report.py",
-    "pool-writeback": "pool_writeback.py",
+    "pool-writeback": "pool_writeback.py", "web": "web.py",
 }
 NO_VENV = {"setup-env", "doctor"}  # these must run with the system Python
 

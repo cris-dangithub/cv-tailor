@@ -79,6 +79,33 @@ say "set up cv-tailor"). The setup asks, in this order:
 
 From then on, in that folder, pasting an offer is enough.
 
+## Web app
+
+The same work from a browser, or from your phone, instead of a chat window:
+
+```bash
+python skills/cv-tailor/cvt.py setup-env --web    # once
+python skills/cv-tailor/cvt.py web                # run it inside your workspace: http://127.0.0.1:8765
+python skills/cv-tailor/cvt.py web --lan          # also your phone on the same Wi-Fi (link + QR with a token)
+```
+
+- **Desk**: paste one or more offers or links. Each one gets its own agent session, and up to
+  N run in parallel.
+- **Applications**: an index and a board by status, search, and status changes with notes.
+- **Application**: the route of statuses, the CV per language and version, the report, the
+  offer, and feedback that continues the same session.
+- **Documents**: every PDF. Preview it, download it, or ZIP a selection.
+- **Conversations**: replies stream in, tool steps fold away, the agent's questions are
+  answered in place, and anything outside the allow-list waits on an approval card.
+- **Styles and settings**: switch styles or build one from a sample CV. Choose the model
+  (Opus 5.5 by default), the effort (high or medium, also per message), the compaction window
+  (small by default, so chats stay cheap), the concurrency and the language (English,
+  Spanish, Indonesian).
+
+It runs **Claude Code** itself, with your own login and no API key, so `claude` must be
+installed and signed in (`claude auth login`; the desktop app's login does not cover the CLI).
+The UI ships prebuilt: Node is only needed to work on it. Details: `skills/cv-tailor/references/web.md`.
+
 ## Your data
 
 - **The pool is yours and stays where it is.** The skill only stores its location and never
@@ -112,8 +139,10 @@ skills/cv-tailor/        the skill (this is what agents load)
   scripts/               build, verify, index, workspace, voice, extract, styles, github...
   styles/default/        the default style (Montserrat, OFL)
   templates/workspace/   files the setup writes into a workspace
+  scripts/webapp/        the web app's server (FastAPI) and the agent runner (Claude Agent SDK)
+  web/ui/                the web app's UI (React + Vite); dist/ is the committed build
   cvt.py                 launcher: runs any script with the skill's venv
-  requirements.txt
+  requirements.txt       (+ requirements-web.txt for `cvt web`)
 examples/                a fictional candidate, offers, a sample CV YAML and a pool managed by a skill
 tests/                   pytest suite
 ```
@@ -125,6 +154,10 @@ python skills/cv-tailor/cvt.py setup-env --dev
 skills/cv-tailor/.venv/Scripts/python -m pytest tests      # bin/python on macOS/Linux
 python skills/cv-tailor/cvt.py build examples/sample-cv.en.yml -o tmp/sample.pdf
 ```
+
+Web UI (needs Node 20+): run `cvt web` in a workspace, then `npm --prefix skills/cv-tailor/web/ui
+run dev` serves the UI with hot reload on :5173 and sends `/api` to it. Commit the result of
+`npm --prefix skills/cv-tailor/web/ui run build` (`web/ui/dist`), which is what users get.
 
 ## License
 

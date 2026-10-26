@@ -10,7 +10,7 @@ description: >
   CV style from a sample CV or want to switch styles; and to set the skill up the first time.
   Also when they want to undo or correct what was saved into their knowledge base.
   Never invents facts: everything comes from the pool or from the user's answers.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # cv-tailor
@@ -54,6 +54,7 @@ Written below as `cvt <command>`.
 | shares a CV to copy its look, asks for another style, or to switch style | build or switch style (validated with the user) | `references/styles.md` |
 | wants to change languages, pool or other settings | update the config | `references/setup.md` ("Changing the configuration") |
 | wants to edit the content of an existing application | edit its YAML and rebuild | `references/pdf.md` ("Editing an existing version") |
+| wants to work from a browser or a phone instead of the chat ("open the app", "web interface") | start the web app and give the link | `references/web.md` |
 
 When unsure whether a long pasted text is an offer, it is one if it describes a role to fill
 (responsibilities, requirements, company). Don't ask "do you want a CV?": generate it.

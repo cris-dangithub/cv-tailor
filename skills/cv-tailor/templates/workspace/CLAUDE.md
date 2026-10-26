@@ -11,4 +11,6 @@ This folder is a **cv-tailor workspace** (config in `.cv-tailor/config.yaml`).
 - Never write into the knowledge pool yourself. Only its own managing skill may update it, as
   the `cv-tailor` skill explains (pool write-back).
 - Each application folder has a `report.md` for the user: keep it current.
+- The same work can be done from a browser: `python "{{skill_dir}}/cvt.py" web` (add `--lan` for a
+  phone on the same network). Sessions started there use this same skill and workspace.
 - If the skill is not auto-discovered, open `{{skill_dir}}/SKILL.md` and follow it.

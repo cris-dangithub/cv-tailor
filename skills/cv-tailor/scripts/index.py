@@ -32,7 +32,8 @@ import unicodedata
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from common import (INDEX_NAME, STATUSES, apps_dir, load_config, now,  # noqa: E402
-                    read_json, require_workspace, save_config, slugify, today, write_json)
+                    read_json, require_workspace, save_config, slugify, today, workspace_lock,
+                    write_json)
 
 ID_RE = re.compile(r"^(\d+)-")
 DEFAULT_WIDTH = 6
@@ -89,8 +90,9 @@ def rebuild_index(ws) -> int:
 def save_meta(ws, d: pathlib.Path, meta: dict) -> None:
     meta = {k: v for k, v in meta.items() if not k.startswith("_")}
     meta["updated"] = now()
-    write_json(d / "meta.json", meta)
-    rebuild_index(ws)
+    with workspace_lock(ws):
+        write_json(d / "meta.json", meta)
+        rebuild_index(ws)
     try:  # the candidate-facing report always reflects the current state
         import report  # noqa: PLC0415
         report.update(ws, d)
@@ -136,6 +138,11 @@ def next_id(ws) -> str:
 
 # --------------------------------------------------------------------------- commands
 def cmd_new(ws, a) -> dict:
+    with workspace_lock(ws):  # the id is taken by creating its folder; nobody may race us to it
+        return _new(ws, a)
+
+
+def _new(ws, a) -> dict:
     cfg = load_config(ws)
     new = next_id(ws)
     slug = slugify(f"{a.company}-{a.role}") if a.company or a.role else "offer"
@@ -163,6 +170,11 @@ def cmd_new(ws, a) -> dict:
 
 
 def cmd_update(ws, a):
+    with workspace_lock(ws):
+        _update(ws, a)
+
+
+def _update(ws, a):
     d = find_app(ws, a.id)
     meta = read_json(d / "meta.json")
     if a.summary is not None:
@@ -183,6 +195,11 @@ def cmd_update(ws, a):
 
 
 def cmd_add_file(ws, a):
+    with workspace_lock(ws):
+        _add_file(ws, a)
+
+
+def _add_file(ws, a):
     d = find_app(ws, a.id)
     meta = read_json(d / "meta.json")
     p = pathlib.Path(a.path)
@@ -198,6 +215,11 @@ def cmd_add_file(ws, a):
 
 
 def cmd_status(ws, a):
+    with workspace_lock(ws):
+        _status(ws, a)
+
+
+def _status(ws, a):
     if a.status not in STATUSES:
         sys.exit(f"status must be one of {STATUSES}")
     d = find_app(ws, a.id)
@@ -324,6 +346,11 @@ def cmd_search(ws, a):
 
 
 # --------------------------------------------------------------------------- cli
+def _locked(ws, fn, *args):
+    with workspace_lock(ws):
+        return fn(ws, *args)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--workspace", default=None)
@@ -385,7 +412,7 @@ def main(argv=None):
      "list": cmd_list, "show": cmd_show, "search": cmd_search,
      "path": lambda w, x: print(find_app(w, x.id)),
      "rebuild": lambda w, x: print(f"index rebuilt: {rebuild_index(w)} application(s)"),
-     "renumber": lambda w, x: renumber(w, x.width)}[a.cmd](ws, a)
+     "renumber": lambda w, x: _locked(w, renumber, x.width)}[a.cmd](ws, a)
 
 
 if __name__ == "__main__":

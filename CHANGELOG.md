@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.3.0 — 2026-10-26
+
+- **Web app** (`cvt web`). A local browser app over the workspace, as an alternative to the
+  chat window.
+  - Paste offers: each one gets its own agent session, and several run in parallel.
+  - Follow the agent as it streams, answer its questions in place, and approve or deny
+    actions outside its allow-list.
+  - Keep each application's status on an index or a board.
+  - Read an application's route, CVs per language and version, report and offer, and send it
+    feedback.
+  - Preview, download or ZIP any PDF.
+  - Switch styles or build one from a sample CV.
+  - The UI is in English, Spanish and Indonesian, light or dark, and works on a phone.
+- The app runs Claude Code itself, with the user's own login and no API key. One message is
+  one turn:
+  - it resumes the session, so idle chats cost nothing;
+  - the model is configurable and defaults to `claude-opus-5-5`;
+  - effort is high or medium per message;
+  - a small auto-compaction window (100k by default) keeps long chats cheap.
+- `cvt web --lan` opens it to other devices on the network. They need a one-time link with an
+  access token, also shown as a QR. Host and Origin are checked on every request, and by
+  default the app listens on 127.0.0.1 only.
+- Optional dependencies (`requirements-web.txt`) install with `cvt setup-env --web`. The UI ships
+  prebuilt in `web/ui/dist`. `cvt doctor` reports the web app and whether the Claude Code CLI
+  is present.
+- **Parallel sessions no longer collide.** Index writes and id allocation take a workspace
+  lock (`.cv-tailor/index.lock`), so two agents creating applications at once get different
+  ids.
+- New workspaces ignore `.cv-tailor/web/`.
+
 ## 0.2.0 — 2026-10-04
 
 - **The knowledge pool learns from your answers.** When the pool is managed by a skill whose
