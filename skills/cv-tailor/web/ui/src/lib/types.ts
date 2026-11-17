@@ -29,10 +29,15 @@ export interface AppRow {
   updated?: string;
   folder: string;
   pdfs: number;
+  deliverables?: Deliverable[];
 }
+
+export type Deliverable = "cv" | "proposal";
+export type DeliverableChoice = Deliverable | "both";
 
 export interface Pdf {
   name: string;
+  kind?: Deliverable;
   lang: string | null;
   version: number;
   current: boolean;

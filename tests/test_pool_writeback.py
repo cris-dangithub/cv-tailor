@@ -131,7 +131,7 @@ def test_report_is_for_people(managed):
     for bad in ("cvt ", ".cv-tailor", ".py", "meta.json", "verify", "--"):
         assert bad not in visible, bad
     # the agent block survives a refresh
-    text = text.replace("_(se completa al generar el CV)_", "Destaqué dbt porque la oferta lo pide.", 1)
+    text = text.replace("_(se completa al generar los documentos)_", "Destaqué dbt porque la oferta lo pide.", 1)
     (d / "report.md").write_text(text, encoding="utf-8")
     index.main(["--workspace", str(ws), "status", "1", "interview"])
     text = (d / "report.md").read_text(encoding="utf-8")

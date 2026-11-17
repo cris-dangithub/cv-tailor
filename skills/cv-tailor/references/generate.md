@@ -10,7 +10,10 @@ Triggered by any pasted or linked job offer. The user does not need to say "gene
 - Languages: `cv_languages` from the config, unless the user restricted this request
   ("only English"). The offer's own language does not change the set, but if the offer is in a
   language that is **not** configured, mention it and offer to add it for this offer.
-- Result: n offers × z languages CVs.
+- **What to produce per post**: `cv`, `proposal` or `both` (`references/proposal.md` §0): an
+  explicit choice wins (the web app's selector, or the user's words); otherwise infer it from the
+  post (a role to fill → CV; work to deliver → proposal) and say it in one line.
+- Result: n posts × z languages × the chosen documents.
 
 ## 2. Get the offer text, open the application
 
@@ -21,7 +24,9 @@ For each offer:
    Text → save it as is. Never generate from a title alone.
 2. Read the offer and get company, role and location.
 3. `cvt index new --company "<Company>" --role "<Role>" --location "<Location>" --url "<url>" \
-   --offer-file <offer.md> [--languages en]` → prints `{"id": "000012", "dir": "..."}`.
+   --offer-file <offer.md> [--languages en] --deliverables cv|proposal|both` → prints
+   `{"id": "000012", "dir": "..."}`. For a client brief, `--company` is the client and `--role`
+   the project.
    The folder `applications/000012-company-role/` now has `offer.md` and `meta.json`.
 
 ## 3. Read the pool (once per run, shared by all offers)
@@ -56,6 +61,13 @@ was paid, whether a technology was used in production, which personal projects t
   preference / pending) and, if the pool has a managing skill that allows updates, hand the
   positives, corrections and — only when the pool has a place for them — negatives to that skill,
   in the background while the CVs are written: `references/pool-writeback.md`. Not asked, automatic.
+
+## 6b. Proposals
+
+When the application's `deliverables` include `proposal`, write it after the positioning (it
+reuses the same evidence) following `references/proposal.md`: brief → implementation plan →
+`proposal.<lang>.yml` → build/verify/review → the message to paste. Its open questions (scope,
+access, rate) join the single batch of §5. Steps 6–7 below apply only when `cv` is included.
 
 ## 6. Write each CV, per language
 

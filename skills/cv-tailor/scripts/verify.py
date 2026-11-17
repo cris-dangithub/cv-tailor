@@ -199,6 +199,12 @@ def verify(pdf: pathlib.Path, style: str | None = None, content: pathlib.Path | 
     reader = PdfReader(str(pdf))
     n = len(reader.pages)
     target = page_ref.get("target_pages")
+    if html.is_file():  # the document's own target (meta.target_pages), written by build.py
+        m = re.search(r'name="cv-tailor-target-pages" content="(\d+)"',
+                      html.read_text(encoding="utf-8", errors="replace"))
+        target = int(m.group(1)) if m else target
+    if data and (data.get("meta") or {}).get("target_pages"):
+        target = int(data["meta"]["target_pages"])
     if target:
         rep.check(f"pages ({n})", n <= target, f"target <= {target}")
     box = reader.pages[0].mediabox

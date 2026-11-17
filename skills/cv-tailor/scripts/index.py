@@ -13,6 +13,8 @@ longer fits, every folder and meta is renumbered to one more digit before creati
     index.py path 12
     index.py update 12 --summary "..." --keywords "spark,airflow" --set location=Remote
     index.py add-file 12 --lang en --kind pdf --path CV-...-EN.pdf
+    index.py add-file 12 --lang en --kind proposal-pdf --path Proposal-...-EN.pdf
+    (index.py new ... --deliverables cv|proposal|both)
     index.py status 12 replied [--note "recruiter email 2026-10-20"]
     index.py search "Hi, thanks for applying to the Data Engineer role at Acme" [--top 5] [--json]
     index.py rebuild
@@ -73,7 +75,27 @@ def find_app(ws, ref: str) -> pathlib.Path:
 
 
 INDEX_FIELDS = ["id", "company", "role", "location", "url", "date", "languages", "style",
-                "status", "keywords", "summary", "folder"]
+                "status", "keywords", "summary", "folder", "deliverables"]
+
+# What an application produces: a CV (job offer), an implementation proposal (freelance project,
+# RFP, gig) or both. Proposal files live next to the CV files under `files[lang]`, kind
+# `proposal-<yaml|pdf|html|message>`.
+DELIVERABLES = ("cv", "proposal")
+FILE_KINDS = ["yaml", "pdf", "html", "review",
+              "proposal-yaml", "proposal-pdf", "proposal-html", "proposal-message"]
+
+
+def parse_deliverables(value: str | None) -> list[str]:
+    if not value:
+        return ["cv"]
+    v = value.strip().lower()
+    if v == "both":
+        return list(DELIVERABLES)
+    out = [x.strip() for x in v.split(",") if x.strip()]
+    bad = [x for x in out if x not in DELIVERABLES]
+    if bad or not out:
+        sys.exit(f"--deliverables: use cv, proposal, cv,proposal or both (got {value!r})")
+    return [d for d in DELIVERABLES if d in out]
 
 
 def rebuild_index(ws) -> int:
@@ -153,6 +175,7 @@ def _new(ws, a) -> dict:
         "id": new, "slug": slug, "company": a.company or "", "role": a.role or "",
         "location": a.location or "", "url": a.url or "", "date": a.date or today(),
         "languages": langs,
+        "deliverables": parse_deliverables(getattr(a, "deliverables", None)),
         "style": (cfg.get("style") or {}).get("active", "default"),
         "status": "generated",
         "status_history": [{"status": "generated", "date": today(), "note": ""}],
@@ -186,6 +209,9 @@ def _update(ws, a):
         k, _, v = kv.partition("=")
         if k in ("id", "files", "status_history"):
             sys.exit(f"{k} cannot be set directly")
+        if k == "deliverables":
+            meta[k] = parse_deliverables(v)
+            continue
         meta[k] = [x.strip() for x in v.split(",")] if k == "languages" else v
     if a.version_note:
         vs = meta.setdefault("versions", [])
@@ -366,6 +392,8 @@ def main(argv=None):
     p.add_argument("--keywords", default="")
     p.add_argument("--summary", default="")
     p.add_argument("--offer-file", default=None, help="file with the offer text, copied to offer.md")
+    p.add_argument("--deliverables", default="cv",
+                   help="what to produce: cv (default), proposal, or both (= cv,proposal)")
 
     p = sub.add_parser("update")
     p.add_argument("id")
@@ -377,7 +405,7 @@ def main(argv=None):
     p = sub.add_parser("add-file")
     p.add_argument("id")
     p.add_argument("--lang", required=True)
-    p.add_argument("--kind", required=True, choices=["yaml", "pdf", "html", "review"])
+    p.add_argument("--kind", required=True, choices=FILE_KINDS)
     p.add_argument("--path", required=True)
 
     p = sub.add_parser("status")

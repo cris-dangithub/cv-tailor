@@ -19,11 +19,25 @@ and answers in it; there is no terminal they can see.
   user can do next."""
 
 
-def offer(text: str, url: str) -> str:
+DELIVERABLE_LINES = {
+    "cv": "The user chose to produce: a CV only (do not write a proposal).",
+    "proposal": ("The user chose to produce: an implementation proposal only (PDF + short message "
+                 "to paste), no CV. Follow references/proposal.md."),
+    "both": ("The user chose to produce: both a CV and an implementation proposal (PDF + short "
+             "message to paste). Follow references/generate.md and references/proposal.md."),
+}
+
+
+def offer(text: str, url: str, deliverable: str | None = None) -> str:
+    """The first message of an offer thread. `deliverable` comes from the selector on the desk
+    (cv | proposal | both); without it the skill decides from the post, as in the chat."""
+    choice = DELIVERABLE_LINES.get((deliverable or "").lower())
+    note = f"\n{choice} Pass it to `cvt index new --deliverables`." if choice else ""
+    what = "post" if deliverable in ("proposal", "both") else "job offer"
     if url and not text:
-        return f"Use the cv-tailor skill to generate the application for the job offer at this link:\n{url}"
+        return f"Use the cv-tailor skill to generate the application for the {what} at this link:\n{url}{note}"
     head = f"Link: {url}\n\n" if url else ""
-    return ("Use the cv-tailor skill to generate the application for this job offer.\n\n"
+    return (f"Use the cv-tailor skill to generate the application for this {what}.{note}\n\n"
             f"{head}<offer>\n{text}\n</offer>")
 
 

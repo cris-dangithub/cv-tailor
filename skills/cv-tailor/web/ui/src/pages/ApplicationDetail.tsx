@@ -170,13 +170,19 @@ function Detail({ app }: { app: AppDetail }) {
 
 function Documents({ app }: { app: AppDetail }) {
   const { t, lang } = useI18n();
-  const langs = [...new Set(app.pdfs.map((p) => p.lang).filter(Boolean))] as string[];
+  const kinds = [...new Set(app.pdfs.map((p) => p.kind ?? "cv"))];
+  const [kind, setKind] = useState<string>(kinds[0] ?? "cv");
+  const ofKind = app.pdfs.filter((p) => (p.kind ?? "cv") === kind);
+  const langs = [...new Set(ofKind.map((p) => p.lang).filter(Boolean))] as string[];
   const [pick, setPick] = useState<string>(langs[0] ?? "");
+  useEffect(() => {
+    if (!kinds.includes(kind as never) && kinds[0]) setKind(kinds[0]);
+  }, [kinds.join(","), kind]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!langs.includes(pick) && langs[0]) setPick(langs[0]);
   }, [langs.join(","), pick]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const versions = app.pdfs.filter((p) => p.lang === pick).sort((a, b) => b.version - a.version);
+  const versions = ofKind.filter((p) => p.lang === pick).sort((a, b) => b.version - a.version);
   const [vName, setVName] = useState<string | null>(null);
   const shown: Pdf | undefined = versions.find((v) => v.name === vName) ?? versions.find((v) => v.current) ?? versions[0];
 
@@ -185,6 +191,14 @@ function Documents({ app }: { app: AppDetail }) {
   return (
     <div className="docs-view">
       <div className="docs-bar">
+        {kinds.length > 1 && (
+          <Segmented
+            label={t("detail.tab.documents")}
+            value={kind}
+            onChange={(v) => (setKind(v), setVName(null))}
+            options={kinds.map((k) => ({ value: k, label: t(`detail.kind.${k}` as never) }))}
+          />
+        )}
         {langs.length > 1 && (
           <Segmented label={t("detail.tab.documents")} value={pick} onChange={(v) => (setPick(v), setVName(null))} options={langs.map((l) => ({ value: l, label: langName(l, lang) }))} />
         )}

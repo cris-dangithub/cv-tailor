@@ -16,6 +16,10 @@ agente: 000014 Acme Mobility — Analytics Engineer → CV-AlexRivera-AcmeMobili
 
 - **Genera** un CV por oferta e idioma (n ofertas × z idiomas), solo con tu pool: archivos,
   carpetas, links, GitHub. Lo que falta lo pregunta una vez y lo recuerda.
+- **Escribe propuestas de implementación** para proyectos freelance y encargos de clientes: un
+  plan por fases con estimaciones, entregables y pruebas de tu pool, en PDF con tu estilo, más un
+  mensaje corto para pegar en la plataforma. Elige CV, propuesta o ambos por publicación (un
+  selector en la app web; en el chat, dilo o deja que lo deduzca).
 - **Escribe con tu voz**, medida sobre textos tuyos, con comprobaciones numéricas (longitud de
   frase, primera persona, señales de IA) en vez de opiniones.
 - **Numera y guarda** cada aplicación (`applications/000001-empresa-cargo/`) con la oferta, el

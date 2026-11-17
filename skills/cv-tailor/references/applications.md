@@ -20,7 +20,8 @@ cvt index path <id>
 cvt index search "<free text>" [--top 5] [--status ...] [--since YYYY-MM-DD] [--json]
 cvt index status <id> <generated|sent|replied|interview|rejected|offer|withdrawn> [--note "..."]
 cvt index update <id> --summary "..." --keywords "a,b" --set location=Remote --version-note "v2: ..."
-cvt index add-file <id> --lang en --kind pdf|yaml|html|review --path <file>
+cvt index add-file <id> --lang en --kind pdf|yaml|html|review|proposal-pdf|proposal-yaml|proposal-html|proposal-message --path <file>
+cvt index update <id> --set deliverables=both   # cv | proposal | both
 ```
 
 ## Search: "they replied and I don't remember what I sent"

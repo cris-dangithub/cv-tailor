@@ -227,16 +227,18 @@ def build(content: pathlib.Path, out: pathlib.Path, style: str | None = None,
     assets = stage_assets(style_dir, ws)
     env = Environment(loader=FileSystemLoader(str(style_dir)), undefined=StrictUndefined,
                       trim_blocks=False, lstrip_blocks=False, autoescape=False)
+    # A document may set its own page target (a proposal is not a CV): meta.target_pages wins
+    target = (data.get("meta") or {}).get("target_pages") or (ref.get("page") or {}).get("target_pages")
     html = env.get_template("cv.html.j2").render(
         tokens_css=root_block(css_vars(style_dir, ref)),
         css_path=rel_or_uri(assets / "cv.css", html_path.parent),
         style_name=style_dir.name,
-        target_pages=(ref.get("page") or {}).get("target_pages", 2),
+        target_pages=target or 2,
         **data)
     html_path.write_text(html, encoding="utf-8")
     print(f"html: {html_path}")
     engine = render(html_path, out)
-    return report(out, (ref.get("page") or {}).get("target_pages"), engine)
+    return report(out, target, engine)
 
 
 def build_from_html(html_path: pathlib.Path, out: pathlib.Path) -> int:

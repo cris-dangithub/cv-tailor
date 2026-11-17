@@ -29,9 +29,10 @@ NOTES_START, NOTES_END = "<!-- cv-tailor:notes:start -->", "<!-- cv-tailor:notes
 L = {
     "en": {
         "status": "Status", "updated": "Updated", "offer": "Offer", "applied_on": "Created on",
-        "history": "History", "cvs": "Your CVs", "kb": "Your knowledge base", "feedback": "Your feedback",
+        "history": "History", "cvs": "Your documents", "cv": "CV", "proposal": "Proposal",
+        "message": "message to paste", "cvs_only": "Your CVs", "kb": "Your knowledge base", "feedback": "Your feedback",
         "versions": "Versions",
-        "st": {"generated": "CV ready, not sent yet", "sent": "Sent", "replied": "They replied",
+        "st": {"generated": "Ready, not sent yet", "sent": "Sent", "replied": "They replied",
                "interview": "Interviewing", "rejected": "Not selected", "offer": "Offer received",
                "withdrawn": "Withdrawn"},
         "fits": "fits in {n} pages", "fits1": "fits on one page", "over": "is {n} pages, longer than the {t} planned",
@@ -44,14 +45,15 @@ L = {
         "kb_nothing": "Nothing new to save in your knowledge base.",
         "kb_undo": "If something is wrong, tell me «undo the knowledge base changes of {id}» or «correct ...».",
         "kb_rolled_all": "undone on {d}", "kb_rolled_part": "partly undone on {d}",
-        "notes_hint": "_(filled in when the CV is generated)_",
+        "notes_hint": "_(filled in when the documents are generated)_",
         "notes_head": ["## What I decided and why", "## Questions I asked you", "## Before you send it"],
     },
     "es": {
         "status": "Estado", "updated": "Actualizado", "offer": "Oferta", "applied_on": "Creada el",
-        "history": "Historial", "cvs": "Tus CVs", "kb": "Tu base de conocimiento", "feedback": "Tus comentarios",
+        "history": "Historial", "cvs": "Tus documentos", "cv": "CV", "proposal": "Propuesta",
+        "message": "mensaje para pegar", "cvs_only": "Tus CVs", "kb": "Tu base de conocimiento", "feedback": "Tus comentarios",
         "versions": "Versiones",
-        "st": {"generated": "CV listo, todavía no enviado", "sent": "Enviada", "replied": "Te respondieron",
+        "st": {"generated": "Listo, todavía no enviado", "sent": "Enviada", "replied": "Te respondieron",
                "interview": "En entrevistas", "rejected": "No seleccionada", "offer": "Oferta recibida",
                "withdrawn": "Retirada"},
         "fits": "cabe en {n} páginas", "fits1": "cabe en una página", "over": "ocupa {n} páginas, más de las {t} previstas",
@@ -64,7 +66,7 @@ L = {
         "kb_nothing": "No hubo nada nuevo que guardar en tu base de conocimiento.",
         "kb_undo": "Si algo no está bien, dime «deshaz los cambios en mi base de la {id}» o «corrige ...».",
         "kb_rolled_all": "deshecho el {d}", "kb_rolled_part": "deshecho en parte el {d}",
-        "notes_hint": "_(se completa al generar el CV)_",
+        "notes_hint": "_(se completa al generar los documentos)_",
         "notes_head": ["## Qué decidí y por qué", "## Lo que te pregunté", "## Antes de enviarlo"],
     },
 }
@@ -89,9 +91,12 @@ def domains(urls: list[str]) -> str:
     return ", ".join(dict.fromkeys((urlparse(u).netloc or u).removeprefix("www.") for u in urls))
 
 
-def cv_line(d: pathlib.Path, lang: str, files: dict, t: dict, names: dict) -> str:
-    pdf = files.get("pdf")
+def cv_line(d: pathlib.Path, lang: str, files: dict, t: dict, names: dict, kind: str = "cv",
+            labelled: bool = False) -> str:
+    pdf = files.get("pdf" if kind == "cv" else "proposal-pdf")
     name = names.get(lang, lang.upper())
+    if labelled:
+        name = f"{t[kind]} — {name}"
     if not pdf:
         return f"- **{name}**: {t['not_built']}"
     v = read_json(d / (pathlib.Path(pdf).name + ".verify.json"))
@@ -114,6 +119,9 @@ def cv_line(d: pathlib.Path, lang: str, files: dict, t: dict, names: dict) -> st
         if v.get("pending_markers"):
             bits.append(t["pending_in_pdf"])
     link = f"[{pathlib.Path(pdf).name}]({pathlib.Path(pdf).as_posix()})"
+    msg = files.get("proposal-message") if kind == "proposal" else None
+    if msg:
+        link += f" · [{t['message']}]({pathlib.Path(msg).as_posix()})"
     return f"- **{name}**: {link}" + (f" — {'; '.join(bits)}." if bits else "")
 
 
@@ -151,10 +159,12 @@ def render_auto(ws, d: pathlib.Path, meta: dict) -> dict:
     if meta.get("url"):
         top.append(f"**{t['offer']}:** [{domains([meta['url']])}]({meta['url']})  ")
     top.append(f"**{t['updated']}:** {(meta.get('updated') or '')[:10]}")
-    top += ["", f"## {t['cvs']}", ""]
+    kinds = [k for k in ("cv", "proposal") if k in (meta.get("deliverables") or ["cv"])]
+    top += ["", f"## {t['cvs'] if kinds != ['cv'] else t['cvs_only']}", ""]
     files = meta.get("files") or {}
-    for lang in meta.get("languages") or files.keys():
-        top.append(cv_line(d, lang, files.get(lang, {}), t, names))
+    for kind in kinds:
+        for lang in meta.get("languages") or files.keys():
+            top.append(cv_line(d, lang, files.get(lang, {}), t, names, kind, labelled=kinds != ["cv"]))
 
     bottom = [f"## {t['kb']}", "", *kb_lines(cfg, meta, t), ""]
     versions = meta.get("versions") or []

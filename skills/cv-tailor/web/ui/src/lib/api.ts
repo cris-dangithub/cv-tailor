@@ -89,8 +89,8 @@ export const api = {
     return { blob: await r.blob(), name };
   },
 
-  offers: (items: { text?: string; url?: string }[], effort?: string) =>
-    req<Thread[]>("/api/offers", json("POST", { items, effort })),
+  offers: (items: { text?: string; url?: string }[], effort?: string, deliverable?: string) =>
+    req<Thread[]>("/api/offers", json("POST", { items, effort, deliverable })),
   threads: () => req<Thread[]>("/api/threads"),
   thread: (id: string) => req<ThreadDetail>(`/api/threads/${id}`),
   newThread: (text: string, effort?: string, app_id?: string) =>

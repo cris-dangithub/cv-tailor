@@ -313,3 +313,12 @@ def test_runner_links_the_thread_only_to_a_real_new_application(ws):
     assert store.get(t["id"])["app_id"] is None
     call("b", "Bash", {"command": 'python "/s/cvt.py" index new --company Acme'}, '{"id": "000003", "dir": "/w/x"}')
     assert store.get(t["id"])["app_id"] == "000003"
+
+
+def test_offer_deliverable_choice_reaches_the_prompt(client):
+    r = client.post("/api/offers", json={"items": [{"text": "Build our sales pipeline (freelance)"}],
+                                        "deliverable": "proposal"})
+    assert r.status_code == 200
+    sent = client.runner.sent[-1][1]
+    assert "implementation proposal only" in sent and "--deliverables" in sent
+    assert client.post("/api/offers", json={"items": [{"text": "x"}], "deliverable": "letter"}).status_code == 422

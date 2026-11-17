@@ -3,21 +3,26 @@ name: cv-tailor
 description: >
   Generates a tailored CV (PDF, in every configured language) for each job offer, from the
   user's own knowledge pool (files, folders, links, GitHub) and in the user's own writing
-  voice. Use it whenever the user pastes or links one or more job offers or job descriptions,
-  even without asking for a CV; when they ask which CV they sent to a company, or say a
+  voice, and/or an implementation proposal (PDF + a short message to paste) for freelance
+  projects, client briefs and RFPs. Use it whenever the user pastes or links one or more job
+  offers, job descriptions or freelance project posts, even without asking for a CV; when they
+  ask for a proposal, or for "CV and proposal"; when they ask which CV they sent to a company, or say a
   recruiter replied and they don't remember what they applied with; when they give feedback
   on a generated application; when they update an application's status; when they want a new
   CV style from a sample CV or want to switch styles; and to set the skill up the first time.
   Also when they want to undo or correct what was saved into their knowledge base.
   Never invents facts: everything comes from the pool or from the user's answers.
-version: 0.3.0
+version: 0.4.0
 ---
 
 # cv-tailor
 
-Two required inputs: a **knowledge pool** about the candidate (configured once) and a **job
-offer** (text, file or link). Output per offer: one numbered application folder with one CV per
-configured language, each as editable YAML, HTML and PDF, plus the reasoning behind it.
+Two required inputs: a **knowledge pool** about the candidate (configured once) and a **post**
+(text, file or link): a job offer, or a freelance project / client brief. Output per post: one
+numbered application folder with, per configured language, a **CV**, an **implementation
+proposal** (PDF + a short message to paste), or **both** — each as editable YAML, HTML and PDF,
+plus the reasoning behind it. Which one: `references/proposal.md` §0 (an explicit choice — the
+web app's selector or the user's words — wins; otherwise inferred from the post and announced).
 
 `SKILL_DIR` below is the folder that contains this file. Every command is run through the
 launcher, which uses the skill's own Python environment:
@@ -47,6 +52,7 @@ Written below as `cvt <command>`.
 | The user... | Do | Read |
 |---|---|---|
 | pastes or links one or more job offers, with or without asking | generate the CVs (n offers × z languages) | `references/generate.md` |
+| pastes a freelance project / client brief / RFP, or asks for a proposal or "CV and proposal" | generate the proposal (and the CV when asked) | `references/generate.md` + `references/proposal.md` |
 | asks what they sent somewhere, or says a company replied | search past applications, show what was sent, offer to update the status | `references/applications.md` |
 | comments on a generated application ("on 000012 I didn't like...") | record feedback, learn a rule, offer a v2 | `references/feedback.md` |
 | reports progress (sent, interview, rejected, offer) | update the status | `references/applications.md` |
@@ -114,6 +120,7 @@ Choosing the wrong material is not fixed by good wording; good wording is not fi
       report.md                  the application report, for the candidate, always current
       offer.md  meta.json  positioning.md
       cv.en.yml  CV-Name-Company-EN.html  CV-Name-Company-EN.pdf  CV-Name-Company-EN-review.md
+      proposal.en.yml  Proposal-Name-Client-EN.pdf (+ .html, -review.md, -message.md)   # when asked
       feedback.md
 ```
 

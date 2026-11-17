@@ -98,6 +98,10 @@ status, and how to use it: "paste an offer (or several, or links) here".
 | candidate name | `cvt workspace set candidate.name="Full Name"` |
 
 | knowledge-base updates on / off | `cvt workspace set pool.writeback=auto` / `=off` |
+| rate for proposals (optional; without it proposals carry no price) | `cvt workspace set proposal.rate.amount=25 proposal.rate.currency=USD proposal.rate.unit=hour` (`unit`: hour, day or project) |
+
+The rate is never asked during setup: it is asked the first time a proposal needs a price, or
+the user sets it when they want (`references/proposal.md` §2).
 
 After a pool change, run `cvt workspace scan-pool --save` (it says whether the manager probe must be
 redone) and offer to re-measure the voice profile.

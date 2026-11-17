@@ -5,11 +5,21 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Empty, PageHead, rowIn, ThreadState } from "../components/Bits";
 import { Route } from "../components/Route";
-import { EffortSwitch } from "../components/Segmented";
+import { EffortSwitch, Segmented } from "../components/Segmented";
 import { useI18n } from "../i18n";
 import { api } from "../lib/api";
 import { ago, folio, langName } from "../lib/format";
-import type { Thread } from "../lib/types";
+import type { DeliverableChoice, Thread } from "../lib/types";
+
+const WHAT_KEY = "cv-tailor.deliverable";
+function savedWhat(): DeliverableChoice {
+  try {
+    const v = localStorage.getItem(WHAT_KEY);
+    return v === "proposal" || v === "both" ? v : "cv";
+  } catch {
+    return "cv";
+  }
+}
 
 interface Draft {
   id: number;
@@ -35,15 +45,26 @@ export function Desk() {
   const apps = useQuery({ queryKey: ["applications", "", null], queryFn: () => api.applications() });
   const [drafts, setDrafts] = useState<Draft[]>([{ id: seq++, text: "" }]);
   const [effort, setEffort] = useState<string | null>(null);
+  const [what, setWhatState] = useState<DeliverableChoice>(savedWhat);
+  const setWhat = (v: DeliverableChoice) => {
+    setWhatState(v);
+    try {
+      localStorage.setItem(WHAT_KEY, v);
+    } catch {
+      /* private mode: the choice just isn't remembered */
+    }
+  };
   const refs = useRef(new Map<number, HTMLTextAreaElement>());
   const filled = drafts.filter((d) => d.text.trim());
   const eff = effort ?? settings.data?.effort ?? "high";
+  const generateKey = what === "proposal" ? "home.generateProposal" : what === "both" ? "home.generateBoth" : "home.generate";
 
   const send = useMutation({
     mutationFn: () =>
       api.offers(
         filled.map((d) => (URL_RE.test(d.text.trim()) ? { url: d.text.trim() } : { text: d.text })),
         eff,
+        what,
       ),
     onSuccess: (created) => {
       setDrafts([{ id: seq++, text: "" }]);
@@ -127,9 +148,19 @@ export function Desk() {
               {t("home.addAnother")}
             </button>
             <div className="composer-send">
+              <Segmented
+                label={t("home.what")}
+                value={what}
+                onChange={setWhat}
+                options={[
+                  { value: "cv", label: t("home.what.cv") },
+                  { value: "proposal", label: t("home.what.proposal") },
+                  { value: "both", label: t("home.what.both") },
+                ]}
+              />
               <EffortSwitch value={eff} onChange={setEffort} t={t as never} />
               <button type="submit" className="btn primary" disabled={!filled.length || send.isPending}>
-                {send.isPending ? t("home.sending") : t("home.generate", { n: Math.max(1, filled.length) })}
+                {send.isPending ? t("home.sending") : t(generateKey as never, { n: Math.max(1, filled.length) })}
                 <ArrowRight size={16} strokeWidth={1.7} aria-hidden />
               </button>
             </div>

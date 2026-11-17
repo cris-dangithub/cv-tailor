@@ -56,9 +56,9 @@ does not cover the CLI. Never run the login for them.
 
 | Screen | What |
 |---|---|
-| Desk | paste one or more offers (text or link) and choose high or medium effort; each offer opens its own session, queued up to `concurrency` at once |
+| Desk | paste one or more offers or freelance projects (text or link), choose **what to produce** — CV, Proposal or Both (remembered in the browser; injected into the first message as "The user chose to produce: …") — and high or medium effort; each post opens its own session, queued up to `concurrency` at once |
 | Applications | index or board by status; search (same scoring as `cvt index search`); change status with a note |
-| Application | the route of statuses, the CV per language and version, report, offer, positioning, feedback log; feedback continues the application's session |
+| Application | the route of statuses, the CV and/or proposal (switch between them) per language and version, report, offer, positioning, feedback log; feedback continues the application's session |
 | Documents | every PDF; preview, download, ZIP of a selection |
 | Conversations | every session; streaming replies, collapsed tool steps, approval cards, stop |
 | Styles | switch the active style; create one from a sample CV (a session following `styles.md`) |

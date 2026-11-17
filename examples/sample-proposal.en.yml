@@ -1,0 +1,93 @@
+# Example implementation proposal for the default style. FICTIONAL candidate (examples/sample-pool)
+# and FICTIONAL client. Same schema as a CV (references/pdf.md); meta.doc and meta.target_pages
+# tell the tools it is a proposal with its own page target (references/proposal.md).
+
+meta:
+  lang: en
+  doc: proposal
+  name: Alex Rivera
+  role: "Implementation proposal — Nightly sales pipeline to BigQuery"
+  role_plain: Implementation proposal
+  target_pages: 3
+
+header:
+  - left: "Valencia, Spain — remote within EU time zones"
+    center: "alex.rivera@example.com"
+    right:
+      - {text: Portfolio, url: "https://example.com/alex"}
+  - left: "<strong>Prepared for: Brightside Foods</strong>"
+    center: ""
+    right: "November 2026"
+
+sections:
+  - title: YOUR GOAL
+    type: prose
+    body: >-
+      Your sales reports are built by hand from three CSV exports and are a day old by the time
+      they reach the team. You want a nightly, tested pipeline into BigQuery so the dashboards
+      refresh on their own and stop breaking when a file changes.
+
+  - title: PROPOSED APPROACH
+    type: entries
+    entries:
+      - entity: "Phase 1 — Discovery and access"
+        entity_note: "Week 1 (estimate)"
+        bullets:
+          - "Review the three exports, their schedules and the current spreadsheet logic with your analyst."
+          - "Agree on the five metrics the dashboard must keep exactly as today."
+          - "Deliverable: a one-page data map and the list of checks the pipeline will run."
+      - entity: "Phase 2 — Pipeline and models"
+        entity_note: "Weeks 2–3 (estimate)"
+        bullets:
+          - "Nightly load into BigQuery orchestrated with Airflow, with retries and an alert when a load fails."
+          - "dbt models for sales by store and by product, with tests that stop a bad file from reaching the dashboard."
+          - "Deliverable: the pipeline running on your project, with its code in your repository."
+      - entity: "Phase 3 — Handover"
+        entity_note: "Week 4 (estimate)"
+        bullets:
+          - "Runbook for the three most likely failures and a recorded walkthrough for your analyst."
+          - "Deliverable: documentation and a 60-minute handover session."
+
+  - title: DELIVERABLES
+    type: list
+    bullets:
+      - "Nightly load into BigQuery with failure alerts."
+      - "Tested dbt models for the sales marts."
+      - "Runbook, data map and a recorded handover."
+
+  - title: WHY ME
+    type: entries
+    entries:
+      - entity: "Northwind Logistics"
+        role: "Data Engineer"
+        dates: "Mar 2023 – present"
+        bullets:
+          - "Moved the nightly warehouse load from cron scripts to Airflow 2; failed loads went from about 6 a month to 1 a quarter."
+          - "Built the dbt project for the finance marts (42 models) with tests that block the merge in CI."
+      - entity: "Tidewater Retail"
+        role: "Data Analyst"
+        dates: "Jun 2020 – Feb 2023"
+        bullets:
+          - "Replaced a weekly Excel sales report with a Looker dashboard used by 40 store managers."
+
+  - title: WHAT I NEED FROM YOU
+    type: list
+    bullets:
+      - "Read access to the three exports and a BigQuery project with permission to create datasets."
+      - "One hour a week with the analyst who owns the current report."
+
+  - title: ASSUMPTIONS AND RISKS
+    type: list
+    bullets:
+      - "The three exports keep their current columns; a format change is handled by the tests, not silently."
+      - "Dashboards stay in your current BI tool; rebuilding them is not included."
+
+  - title: TIMELINE AND INVESTMENT
+    type: prose
+    body: >-
+      About four weeks from access to handover (estimate). Price to be agreed once the scope of
+      phase 1 is confirmed.
+
+  - title: NEXT STEP
+    type: prose
+    body: "A 30-minute call this week to walk through the exports and confirm the five metrics."

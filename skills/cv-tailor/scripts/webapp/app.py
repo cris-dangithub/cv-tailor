@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 import zipfile
+from typing import Literal
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
@@ -53,6 +54,7 @@ class OfferItem(BaseModel):
 class OffersBody(BaseModel):
     items: list[OfferItem]
     effort: str | None = None
+    deliverable: Literal["cv", "proposal", "both"] | None = None
 
 
 class MessageBody(BaseModel):
@@ -401,7 +403,7 @@ def create_app(ws: pathlib.Path, lan: bool = False, lan_hosts: list[str] | None 
                 continue
             t = store.create("offer", prompts.offer_title(text, url),
                              effort=body.effort or settings.load(ws)["effort"])
-            await runner.send(t["id"], prompts.offer(text, url), effort=body.effort,
+            await runner.send(t["id"], prompts.offer(text, url, body.deliverable), effort=body.effort,
                               shown=url or text, author=who(request))
             created.append(store.get(t["id"]))
         if not created:

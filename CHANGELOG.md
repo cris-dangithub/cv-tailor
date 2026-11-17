@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 — 2026-11-17
+
+- **Implementation proposals** for freelance projects, client briefs and RFPs
+  (`references/proposal.md`): the brief, a phased plan with estimated durations, deliverables,
+  proof from the pool, what the client must provide, assumptions and risks, and a price only
+  when a rate exists (`proposal.rate` in the config, or given for that post). Output: a PDF in
+  the active style (same YAML schema as the CV, so every style renders it) and a short message
+  to paste into the platform.
+- **CV, proposal or both** per post: `cvt index new --deliverables cv|proposal|both` (stored in
+  `meta.json`); an explicit choice wins, otherwise the skill infers it from the post and says so.
+- **Web app**: a CV / Proposal / Both selector on the desk, remembered per browser and injected
+  into the prompt; the application page switches between CV and proposal.
+- The report lists proposals and their message next to the CVs; `cvt build`/`cvt verify` honour
+  a document's own `meta.target_pages`.
+
 ## 0.3.0 — 2026-10-26
 
 - **Web app** (`cvt web`). A local browser app over the workspace, as an alternative to the

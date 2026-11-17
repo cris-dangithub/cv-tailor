@@ -16,6 +16,10 @@ agent: 000014 Acme Mobility — Analytics Engineer  → CV-AlexRivera-AcmeMobili
 
 - **Generates** one CV per offer and language (n offers × z languages), from your pool only:
   files, folders, links, GitHub. Missing facts are asked once and remembered.
+- **Writes implementation proposals** for freelance projects and client briefs: a phased plan
+  with estimates, deliverables and proof from your pool, as a PDF in your style plus a short
+  message to paste into the platform. Choose CV, proposal or both per post (a selector in the
+  web app; in the chat, say it or let it infer).
 - **Writes in your voice**, measured from texts you wrote, with numeric checks (sentence length,
   first person, AI tells) instead of opinions.
 - **Numbers and keeps** every application (`applications/000001-company-role/`) with the offer,

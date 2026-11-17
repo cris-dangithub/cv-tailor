@@ -41,7 +41,7 @@ def _row(m: dict) -> dict:
     d = pathlib.Path(m["_dir"])
     return {k: m.get(k) for k in ("id", "company", "role", "location", "url", "date", "languages",
                                   "style", "status", "keywords", "summary", "status_history",
-                                  "versions", "updated")} | {"folder": d.name,
+                                  "versions", "updated")} | {"deliverables": m.get("deliverables") or ["cv"]} | {"folder": d.name,
                                                              "pdfs": len(list(d.glob("*.pdf")))}
 
 
@@ -57,13 +57,14 @@ def applications(ws, q: str = "", status: str | None = None) -> list[dict]:
 
 
 def pdfs_of(d: pathlib.Path, meta: dict) -> list[dict]:
-    current = {(f or {}).get("pdf") for f in (meta.get("files") or {}).values()}
+    current = {(f or {}).get(k) for f in (meta.get("files") or {}).values() for k in ("pdf", "proposal-pdf")}
     out = []
     for p in sorted(d.glob("*.pdf")):
         m = PDF_RE.search(p.name)
         ver = read_json(p.with_name(p.name + ".verify.json"), {}) or {}
         st = p.stat()
         out.append({"name": p.name, "lang": (m.group("lang").lower() if m else None),
+                    "kind": "proposal" if p.name.lower().startswith("proposal-") else "cv",
                     "version": int(m.group("v")) if m and m.group("v") else 1,
                     "current": p.name in current, "size": st.st_size, "modified": st.st_mtime,
                     "pages": ver.get("pages"), "fits": ver.get("fits"),
